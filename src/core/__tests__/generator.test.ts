@@ -85,6 +85,12 @@ describe('TLSA generation', () => {
     });
     expect(record).toMatch(/^_443\._tcp\.example\. 3600 IN TLSA 3 1 1 [0-9A-F]{64}$/);
   });
+
+  it('reports malformed PEM base64 with field context', () => {
+    expect(() => extractSpkiFromPem(`-----BEGIN PUBLIC KEY-----
+AAAAA
+-----END PUBLIC KEY-----`)).toThrow('PEM PUBLIC KEY has an invalid base64 length');
+  });
 });
 
 describe('DNSSEC helpers', () => {
@@ -100,6 +106,10 @@ describe('DNSSEC helpers', () => {
     const dnskey = parseDnskey('example. 3600 IN DNSKEY 257 3 13 AAAA ; ksk');
     expect(dnskey.flags).toBe(257);
     expect(dnskey.publicKeyBase64).toBe('AAAA');
+  });
+
+  it('reports malformed DNSKEY base64 with field context', () => {
+    expect(() => parseDnskey('257 3 13 AAAAA')).toThrow('DNSKEY public key has an invalid base64 length');
   });
 
   it('encodes canonical owner name wire format', () => {

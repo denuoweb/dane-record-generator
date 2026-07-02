@@ -22,7 +22,7 @@ export function parsePemBlocks(input: string): PemBlock[] {
   for (const match of input.matchAll(PEM_RE)) {
     blocks.push({
       label: match[1].trim(),
-      bytes: base64ToBytes(match[2])
+      bytes: base64ToBytes(match[2], `PEM ${match[1].trim()}`)
     });
   }
   return blocks;

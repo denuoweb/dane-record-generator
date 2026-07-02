@@ -34,7 +34,7 @@ export function parseDnskey(input: string): ParsedDnskey {
   if (!Number.isInteger(algorithm) || algorithm < 0 || algorithm > 255) throw new Error('Invalid DNSKEY algorithm.');
   if (!/^[A-Za-z0-9+/=]+$/.test(publicKeyBase64)) throw new Error('DNSKEY public key is not valid base64 text.');
 
-  const publicKey = base64ToBytes(publicKeyBase64);
+  const publicKey = base64ToBytes(publicKeyBase64, 'DNSKEY public key');
   if (publicKey.length === 0) throw new Error('DNSKEY public key is empty.');
 
   const rdata = new Uint8Array(4 + publicKey.length);
