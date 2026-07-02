@@ -282,6 +282,22 @@ ul { padding-left: 1.2rem; }
 .audience-web { border-left: 6px solid #a49578; }
 .audience-integrator { border-left: 6px solid #b6aa90; }
 
+.site-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 26px 0 4px;
+  color: #595246;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.site-footer a {
+  color: #2f5f78;
+  font-weight: 700;
+}
+
 @media (max-width: 1000px) {
   .grid,
   .status-list { grid-template-columns: 1fr; }

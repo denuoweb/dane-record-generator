@@ -10,6 +10,8 @@ const HNS_EXAMPLE_NAMESERVER = 'ns1.example.';
 const ICANN_EXAMPLE_NAMESERVER = 'ns1.example.com.';
 const EXAMPLE_NAMESERVER_IPV4 = '203.0.113.10';
 const EXAMPLE_WEBSITE_IPV4 = '203.0.113.20';
+const DONATION_ADDRESS = 'hs1q5997733eq7f4yyk2vq2z8gz3yqyvpz422ypggh';
+const DONATION_URI = `handshake:${DONATION_ADDRESS}`;
 const CERTIFICATE_PLACEHOLDER = `-----BEGIN CERTIFICATE-----
 ...
 -----END CERTIFICATE-----
@@ -518,6 +520,11 @@ function App() {
           </section>
         </section>
       )}
+
+      <footer className="site-footer">
+        <span>Donation:</span>
+        <a href={DONATION_URI}>{DONATION_ADDRESS}</a>
+      </footer>
     </main>
   );
 }

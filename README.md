@@ -164,3 +164,7 @@ const result = await generateBootstrap({
 - IDNA/i18n: RFC 5890-5894, RFC 3492, Unicode UTS #46.
 - Future email i18n scope: RFC 6530-6533.
 - Handshake resources: HNS `NS`, `DS`, `GLUE4`, `GLUE6`, `SYNTH4`, `SYNTH6`.
+
+## Donation
+
+Donation: [hs1q5997733eq7f4yyk2vq2z8gz3yqyvpz422ypggh](handshake:hs1q5997733eq7f4yyk2vq2z8gz3yqyvpz422ypggh)
