@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { generateBootstrap } from '../bootstrap';
-import { normalizeDomain, normalizeHostname, isInBailiwick, tlsaOwnerName, validateIpv6 } from '../domain';
+import { normalizeDomain, normalizeHostname, isInBailiwick, synthNameserverName, tlsaOwnerName, validateIpv6 } from '../domain';
 import { parseDnskey, dnskeyKeyTag, canonicalNameWire } from '../dnssec';
 import { extractSpkiFromPem, generateTlsaRecord } from '../tlsa';
 
@@ -35,6 +35,11 @@ describe('domain normalization', () => {
   it('rejects malformed IPv6', () => {
     expect(validateIpv6('2001:db8::1')).toBe(true);
     expect(validateIpv6(':::')).toBe(false);
+  });
+
+  it('encodes HNS SYNTH nameserver names from IP addresses', () => {
+    expect(synthNameserverName('45.77.219.32')).toBe('_5l6tm80._synth.');
+    expect(synthNameserverName('203.0.113.10')).toBe('_pc0722g._synth.');
   });
 
   it('exposes verification commands and integrator JSON for delegated HNS', async () => {
@@ -121,19 +126,25 @@ describe('bootstrap generator', () => {
     expect(result.quickSteps.length).toBeGreaterThan(3);
   });
 
-  it('generates HNS direct inline outputs', async () => {
+  it('generates HNS SYNTH nameserver outputs', async () => {
     const result = await generateBootstrap({
       domainType: 'hns',
       setupMode: 'hns-inline',
       domainInput: 'example/',
+      nameserverIpv4: '203.0.113.10',
       websiteIpv4: '203.0.113.20',
       port: 443,
-      protocol: 'tcp'
+      protocol: 'tcp',
+      pemInput: PUBLIC_KEY
     });
 
-    expect(result.parentRecords.map((line) => line.value)).toContain('SYNTH4 203.0.113.20');
-    expect(result.authoritativeRecords).toHaveLength(0);
-    expect(result.serverPresetRecords).toHaveLength(0);
+    expect(result.parentRecords.map((line) => line.value)).toContain('SYNTH4 203.0.113.10');
+    expect(result.authoritativeRecords.some((line) => line.value === 'example. 3600 IN NS _pc0722g._synth.')).toBe(true);
+    expect(result.authoritativeRecords.some((line) => line.value === 'example. 3600 IN A 203.0.113.20')).toBe(true);
+    expect(result.authoritativeRecords.some((line) => line.value.includes(' IN TLSA 3 1 1 '))).toBe(true);
+    expect(result.serverPresetRecords.length).toBeGreaterThan(0);
+    expect(result.statusChecks.find((item) => item.label === 'Nameserver')?.status).toBe('ok');
+    expect(result.statusChecks.find((item) => item.label === 'DS')?.status).toBe('missing');
   });
 
   it('generates ICANN registrar language', async () => {

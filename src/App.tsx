@@ -318,6 +318,11 @@ function App() {
   function loadExample(kind: 'hns-delegated' | 'hns-inline' | 'icann') {
     setPemInput('');
     setDnskeyInput('');
+    setNameserverHost('');
+    setNameserverIpv4('');
+    setNameserverIpv6('');
+    setWebsiteIpv4('');
+    setWebsiteIpv6('');
     if (kind === 'hns-delegated') {
       setDomainType('hns');
       setSetupMode('delegated');
@@ -331,6 +336,7 @@ function App() {
       setDomainType('hns');
       setSetupMode('hns-inline');
       setDomainInput(HNS_EXAMPLE_DOMAIN);
+      setNameserverIpv4(EXAMPLE_NAMESERVER_IPV4);
       setWebsiteIpv4(EXAMPLE_WEBSITE_IPV4);
       setDnsServerPreset('generic-zone');
     }
@@ -430,7 +436,7 @@ function App() {
         <div className="form-card">
           <h2>{t.sections.server}</h2>
           <Field label={t.fields.dnsServerPreset} help={t.fields.dnsServerPresetHelp}>
-            <select value={dnsServerPreset} onChange={(event) => setDnsServerPreset(event.target.value as DnsServerPreset)} disabled={setupMode === 'hns-inline'}>
+            <select value={dnsServerPreset} onChange={(event) => setDnsServerPreset(event.target.value as DnsServerPreset)}>
               <option value="generic-zone">{t.options.genericZone}</option>
               <option value="hosted-dns">{t.options.hostedDns}</option>
               <option value="powerdns">{t.options.powerdns}</option>
@@ -439,14 +445,16 @@ function App() {
               <option value="nsd">{t.options.nsd}</option>
             </select>
           </Field>
-          <Field label={t.fields.nameserverHost} help={t.fields.nameserverHostHelp}>
-            <input value={nameserverHost} onChange={(event) => setNameserverHost(event.target.value)} placeholder={nameserverPlaceholder} disabled={setupMode === 'hns-inline'} autoComplete="off" />
-          </Field>
+          {setupMode !== 'hns-inline' && (
+            <Field label={t.fields.nameserverHost} help={t.fields.nameserverHostHelp}>
+              <input value={nameserverHost} onChange={(event) => setNameserverHost(event.target.value)} placeholder={nameserverPlaceholder} autoComplete="off" />
+            </Field>
+          )}
           <Field label={t.fields.nameserverIpv4} help={t.fields.nameserverIpv4Help}>
-            <input value={nameserverIpv4} onChange={(event) => setNameserverIpv4(event.target.value)} placeholder={EXAMPLE_NAMESERVER_IPV4} disabled={setupMode === 'hns-inline'} autoComplete="off" />
+            <input value={nameserverIpv4} onChange={(event) => setNameserverIpv4(event.target.value)} placeholder={EXAMPLE_NAMESERVER_IPV4} autoComplete="off" />
           </Field>
           <Field label={t.fields.nameserverIpv6} help={t.fields.nameserverIpv6Help}>
-            <input value={nameserverIpv6} onChange={(event) => setNameserverIpv6(event.target.value)} disabled={setupMode === 'hns-inline'} autoComplete="off" />
+            <input value={nameserverIpv6} onChange={(event) => setNameserverIpv6(event.target.value)} autoComplete="off" />
           </Field>
           <Field label={t.fields.websiteIpv4} help={t.fields.websiteIpv4Help}>
             <input value={websiteIpv4} onChange={(event) => setWebsiteIpv4(event.target.value)} placeholder={EXAMPLE_WEBSITE_IPV4} autoComplete="off" />

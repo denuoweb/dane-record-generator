@@ -15,7 +15,7 @@ export const localeText = {
     },
     examples: {
       hnsDelegated: 'HNS delegated',
-      hnsInline: 'HNS inline IP',
+      hnsInline: 'HNS SYNTH nameserver',
       icann: 'ICANN DNSSEC'
     },
     sections: {
@@ -27,7 +27,7 @@ export const localeText = {
       domainType: 'Domain type',
       domainTypeHelp: 'HNS means wallet/name resource. ICANN means registrar panel.',
       setupMode: 'Setup mode',
-      setupModeHelp: 'Delegated mode is for DNSSEC + DANE. Inline mode is HNS-only IP pointing.',
+      setupModeHelp: 'Named mode uses a nameserver hostname. SYNTH mode stores nameserver IPs in HNS; both still use authoritative DNS.',
       domain: 'Domain',
       domainHelp: 'Examples: example/ or example.com',
       dnsServerPreset: 'DNS server preset',
@@ -53,7 +53,7 @@ export const localeText = {
       hns: 'Handshake / HNS',
       icann: 'ICANN / normal DNS',
       delegated: 'Delegated authoritative DNS',
-      hnsInline: 'HNS inline IP mode',
+      hnsInline: 'HNS SYNTH nameserver',
       genericZone: 'Generic zone file',
       hostedDns: 'Hosted DNS provider panel',
       powerdns: 'PowerDNS Authoritative',
@@ -83,7 +83,7 @@ export const localeText = {
       labels: {
         Domain: 'Domain',
         'Website IP': 'Website IP',
-        'HNS inline': 'HNS inline',
+        'HNS inline': 'HNS SYNTH',
         DANE: 'DANE',
         Nameserver: 'Nameserver',
         Glue: 'Glue',
@@ -96,7 +96,7 @@ export const localeText = {
     },
     summary: {
       aria: 'current setup summary',
-      hnsInline: 'HNS inline IP',
+      hnsInline: 'HNS SYNTH nameserver',
       delegated: 'Delegated DNSSEC + DANE',
       glueRequired: 'Glue required',
       externalNameserver: 'External nameserver',
@@ -128,7 +128,7 @@ export const localeText = {
       presetSummary: 'Which preset should I pick?',
       presetBody: 'Use Hosted DNS if your provider supports DNSSEC and TLSA records. Use Generic zone file when you are adapting records into BIND, Knot, NSD, or another server. Use PowerDNS when you want database or API-backed DNS.',
       splitSummary: 'What goes in the wallet versus the DNS server?',
-      splitBody: 'The wallet or registrar gets NS/GLUE/DS. The authoritative DNS server gets NS/A/AAAA/TLSA and signs the zone. TLSA is a DNS-server record, not a wallet record.',
+      splitBody: 'The wallet or registrar gets NS/GLUE or SYNTH, plus DS. The authoritative DNS server gets NS/A/AAAA/TLSA and signs the zone. TLSA is a DNS-server record, not a wallet record.',
       dnskeySummary: 'When do I paste the DNSKEY?',
       dnskeyBody: 'Paste DNSKEY after the authoritative zone is DNSSEC-signed. This page uses it to generate the parent-side DS record; it does not sign the zone or store private DNSSEC keys.',
       idnSummary: 'Can I use an internationalized domain name?',
@@ -151,13 +151,13 @@ export const localeText = {
         done: 'Publica DNSSEC y TLSA para que el sitio DANE pueda servir.'
       }
     },
-    examples: { hnsDelegated: 'HNS delegado', hnsInline: 'IP directa HNS', icann: 'DNSSEC ICANN' },
+    examples: { hnsDelegated: 'HNS delegado', hnsInline: 'Nameserver SYNTH HNS', icann: 'DNSSEC ICANN' },
     sections: { domain: '1. Dominio', server: '2. Servidor', dane: '3. DANE' },
     fields: {
       domainType: 'Tipo de dominio',
       domainTypeHelp: 'HNS significa cartera/recurso de nombre. ICANN significa panel del registrador.',
       setupMode: 'Modo de configuración',
-      setupModeHelp: 'El modo delegado es para DNSSEC + DANE. El modo directo HNS solo apunta a una IP.',
+      setupModeHelp: 'El modo con nombre usa un hostname de nameserver. SYNTH guarda IPs de nameserver en HNS; ambos usan DNS autoritativo.',
       domain: 'Dominio',
       domainHelp: 'Ejemplos: example/ o example.com',
       dnsServerPreset: 'Plantilla de servidor DNS',
@@ -183,7 +183,7 @@ export const localeText = {
       hns: 'Handshake / HNS',
       icann: 'ICANN / DNS normal',
       delegated: 'DNS autoritativo delegado',
-      hnsInline: 'Modo IP directa HNS',
+      hnsInline: 'Nameserver SYNTH HNS',
       genericZone: 'Archivo de zona genérico',
       hostedDns: 'Panel de proveedor DNS alojado',
       powerdns: 'PowerDNS Authoritative',
@@ -206,12 +206,12 @@ export const localeText = {
       ok: 'OK',
       warn: 'Revisar',
       missing: 'Falta',
-      labels: { Domain: 'Dominio', 'Website IP': 'IP web', 'HNS inline': 'HNS directo', DANE: 'DANE', Nameserver: 'Servidor DNS', Glue: 'Glue', DS: 'DS', TLSA: 'TLSA' }
+      labels: { Domain: 'Dominio', 'Website IP': 'IP web', 'HNS inline': 'HNS SYNTH', DANE: 'DANE', Nameserver: 'Servidor DNS', Glue: 'Glue', DS: 'DS', TLSA: 'TLSA' }
     },
     notices: { title: 'Necesita atención' },
     summary: {
       aria: 'resumen de la configuración actual',
-      hnsInline: 'IP directa HNS',
+      hnsInline: 'Nameserver SYNTH HNS',
       delegated: 'DNSSEC + DANE delegado',
       glueRequired: 'Glue requerido',
       externalNameserver: 'Servidor DNS externo',
@@ -236,7 +236,7 @@ export const localeText = {
       presetSummary: '¿Qué plantilla debería elegir?',
       presetBody: 'Usa DNS alojado si tu proveedor admite DNSSEC y registros TLSA. Usa archivo de zona genérico si adaptarás registros a BIND, Knot, NSD u otro servidor. Usa PowerDNS si quieres DNS con base de datos o API.',
       splitSummary: '¿Qué va en la cartera o registrador frente al servidor DNS?',
-      splitBody: 'La cartera o registrador recibe NS/GLUE/DS. El servidor DNS autoritativo recibe NS/A/AAAA/TLSA y firma la zona. TLSA es un registro del servidor DNS, no de la cartera.',
+      splitBody: 'La cartera o registrador recibe NS/GLUE o SYNTH, más DS. El servidor DNS autoritativo recibe NS/A/AAAA/TLSA y firma la zona. TLSA es un registro del servidor DNS, no de la cartera.',
       dnskeySummary: '¿Cuándo pego la DNSKEY?',
       dnskeyBody: 'Pega DNSKEY después de que la zona autoritativa esté firmada con DNSSEC. Esta página la usa para generar el registro DS del padre; no firma la zona ni guarda claves DNSSEC privadas.',
       idnSummary: '¿Puedo usar un dominio internacionalizado?',
@@ -259,13 +259,13 @@ export const localeText = {
         done: 'Publiez DNSSEC et TLSA afin que le site DANE puisse servir.'
       }
     },
-    examples: { hnsDelegated: 'HNS délégué', hnsInline: 'IP HNS directe', icann: 'DNSSEC ICANN' },
+    examples: { hnsDelegated: 'HNS délégué', hnsInline: 'Nameserver SYNTH HNS', icann: 'DNSSEC ICANN' },
     sections: { domain: '1. Domaine', server: '2. Serveur', dane: '3. DANE' },
     fields: {
       domainType: 'Type de domaine',
       domainTypeHelp: 'HNS signifie wallet/ressource de nom. ICANN signifie panneau du bureau d’enregistrement.',
       setupMode: 'Mode de configuration',
-      setupModeHelp: 'Le mode délégué sert à DNSSEC + DANE. Le mode direct HNS pointe seulement vers une IP.',
+      setupModeHelp: 'Le mode nommé utilise un nom de serveur. Le mode SYNTH stocke les IPs des serveurs de noms dans HNS; les deux utilisent un DNS faisant autorité.',
       domain: 'Domaine',
       domainHelp: 'Exemples : example/ ou example.com',
       dnsServerPreset: 'Modèle de serveur DNS',
@@ -291,7 +291,7 @@ export const localeText = {
       hns: 'Handshake / HNS',
       icann: 'ICANN / DNS normal',
       delegated: 'DNS faisant autorité délégué',
-      hnsInline: 'Mode IP HNS directe',
+      hnsInline: 'Nameserver SYNTH HNS',
       genericZone: 'Fichier de zone générique',
       hostedDns: 'Panneau DNS hébergé',
       powerdns: 'PowerDNS Authoritative',
@@ -314,12 +314,12 @@ export const localeText = {
       ok: 'OK',
       warn: 'Vérifier',
       missing: 'Requis',
-      labels: { Domain: 'Domaine', 'Website IP': 'IP web', 'HNS inline': 'HNS direct', DANE: 'DANE', Nameserver: 'Serveur de noms', Glue: 'Glue', DS: 'DS', TLSA: 'TLSA' }
+      labels: { Domain: 'Domaine', 'Website IP': 'IP web', 'HNS inline': 'HNS SYNTH', DANE: 'DANE', Nameserver: 'Serveur de noms', Glue: 'Glue', DS: 'DS', TLSA: 'TLSA' }
     },
     notices: { title: 'À vérifier' },
     summary: {
       aria: 'résumé de la configuration actuelle',
-      hnsInline: 'IP HNS directe',
+      hnsInline: 'Nameserver SYNTH HNS',
       delegated: 'DNSSEC + DANE délégué',
       glueRequired: 'Glue requise',
       externalNameserver: 'Serveur de noms externe',
@@ -344,7 +344,7 @@ export const localeText = {
       presetSummary: 'Quel modèle choisir ?',
       presetBody: 'Utilisez DNS hébergé si votre fournisseur prend en charge DNSSEC et TLSA. Utilisez le fichier de zone générique pour adapter les enregistrements à BIND, Knot, NSD ou un autre serveur. Utilisez PowerDNS pour un DNS avec base de données ou API.',
       splitSummary: 'Que va dans le wallet ou le bureau d’enregistrement, et que va sur le serveur DNS ?',
-      splitBody: 'Le wallet ou le bureau d’enregistrement reçoit NS/GLUE/DS. Le serveur DNS faisant autorité reçoit NS/A/AAAA/TLSA et signe la zone. TLSA est un enregistrement du serveur DNS, pas du wallet.',
+      splitBody: 'Le wallet ou le bureau d’enregistrement reçoit NS/GLUE ou SYNTH, plus DS. Le serveur DNS faisant autorité reçoit NS/A/AAAA/TLSA et signe la zone. TLSA est un enregistrement du serveur DNS, pas du wallet.',
       dnskeySummary: 'Quand coller la DNSKEY ?',
       dnskeyBody: 'Collez DNSKEY après la signature DNSSEC de la zone faisant autorité. Cette page l’utilise pour générer le DS parent ; elle ne signe pas la zone et ne stocke pas de clés DNSSEC privées.',
       idnSummary: 'Puis-je utiliser un nom de domaine internationalisé ?',
@@ -367,13 +367,13 @@ export const localeText = {
         done: 'Veröffentlichen Sie DNSSEC und TLSA, damit die DANE-Website ausgeliefert werden kann.'
       }
     },
-    examples: { hnsDelegated: 'HNS delegiert', hnsInline: 'HNS Inline-IP', icann: 'ICANN DNSSEC' },
+    examples: { hnsDelegated: 'HNS delegiert', hnsInline: 'HNS SYNTH-Nameserver', icann: 'ICANN DNSSEC' },
     sections: { domain: '1. Domain', server: '2. Server', dane: '3. DANE' },
     fields: {
       domainType: 'Domaintyp',
       domainTypeHelp: 'HNS bedeutet Wallet/Namensressource. ICANN bedeutet Registrar-Panel.',
       setupMode: 'Einrichtungsmodus',
-      setupModeHelp: 'Delegierter Modus ist für DNSSEC + DANE. Inline-Modus ist nur HNS-zu-IP.',
+      setupModeHelp: 'Benannter Modus nutzt einen Nameserver-Hostnamen. SYNTH speichert Nameserver-IPs in HNS; beide nutzen autoritatives DNS.',
       domain: 'Domain',
       domainHelp: 'Beispiele: example/ oder example.com',
       dnsServerPreset: 'DNS-Server-Vorlage',
@@ -399,7 +399,7 @@ export const localeText = {
       hns: 'Handshake / HNS',
       icann: 'ICANN / normales DNS',
       delegated: 'Delegiertes autoritatives DNS',
-      hnsInline: 'HNS Inline-IP-Modus',
+      hnsInline: 'HNS SYNTH-Nameserver',
       genericZone: 'Generische Zonendatei',
       hostedDns: 'Hosted-DNS-Provider-Panel',
       powerdns: 'PowerDNS Authoritative',
@@ -422,12 +422,12 @@ export const localeText = {
       ok: 'OK',
       warn: 'Prüfen',
       missing: 'Fehlt',
-      labels: { Domain: 'Domain', 'Website IP': 'Website-IP', 'HNS inline': 'HNS Inline', DANE: 'DANE', Nameserver: 'Nameserver', Glue: 'Glue', DS: 'DS', TLSA: 'TLSA' }
+      labels: { Domain: 'Domain', 'Website IP': 'Website-IP', 'HNS inline': 'HNS SYNTH', DANE: 'DANE', Nameserver: 'Nameserver', Glue: 'Glue', DS: 'DS', TLSA: 'TLSA' }
     },
     notices: { title: 'Benötigt Aufmerksamkeit' },
     summary: {
       aria: 'Zusammenfassung der aktuellen Einrichtung',
-      hnsInline: 'HNS Inline-IP',
+      hnsInline: 'HNS SYNTH-Nameserver',
       delegated: 'Delegiertes DNSSEC + DANE',
       glueRequired: 'Glue erforderlich',
       externalNameserver: 'Externer Nameserver',
@@ -452,7 +452,7 @@ export const localeText = {
       presetSummary: 'Welche Vorlage sollte ich wählen?',
       presetBody: 'Nutzen Sie Hosted DNS, wenn Ihr Provider DNSSEC und TLSA unterstützt. Nutzen Sie die generische Zonendatei für BIND, Knot, NSD oder andere Server. Nutzen Sie PowerDNS für datenbank- oder API-basiertes DNS.',
       splitSummary: 'Was gehört in Wallet/Registrar und was auf den DNS-Server?',
-      splitBody: 'Wallet oder Registrar erhalten NS/GLUE/DS. Der autoritative DNS-Server erhält NS/A/AAAA/TLSA und signiert die Zone. TLSA ist ein DNS-Server-Eintrag, kein Wallet-Eintrag.',
+      splitBody: 'Wallet oder Registrar erhalten NS/GLUE oder SYNTH plus DS. Der autoritative DNS-Server erhält NS/A/AAAA/TLSA und signiert die Zone. TLSA ist ein DNS-Server-Eintrag, kein Wallet-Eintrag.',
       dnskeySummary: 'Wann füge ich DNSKEY ein?',
       dnskeyBody: 'Fügen Sie DNSKEY ein, nachdem die autoritative Zone mit DNSSEC signiert ist. Diese Seite erzeugt daraus den Parent-DS; sie signiert keine Zone und speichert keine privaten DNSSEC-Schlüssel.',
       idnSummary: 'Kann ich einen internationalisierten Domainnamen nutzen?',
@@ -475,13 +475,13 @@ export const localeText = {
         done: 'Publique DNSSEC e TLSA para que o site DANE possa servir.'
       }
     },
-    examples: { hnsDelegated: 'HNS delegado', hnsInline: 'IP direta HNS', icann: 'DNSSEC ICANN' },
+    examples: { hnsDelegated: 'HNS delegado', hnsInline: 'Nameserver SYNTH HNS', icann: 'DNSSEC ICANN' },
     sections: { domain: '1. Domínio', server: '2. Servidor', dane: '3. DANE' },
     fields: {
       domainType: 'Tipo de domínio',
       domainTypeHelp: 'HNS significa carteira/recurso de nome. ICANN significa painel do registrador.',
       setupMode: 'Modo de configuração',
-      setupModeHelp: 'Modo delegado é para DNSSEC + DANE. Modo direto HNS aponta apenas para IP.',
+      setupModeHelp: 'Modo nomeado usa hostname de nameserver. SYNTH guarda IPs de nameserver no HNS; ambos usam DNS autoritativo.',
       domain: 'Domínio',
       domainHelp: 'Exemplos: example/ ou example.com',
       dnsServerPreset: 'Preset de servidor DNS',
@@ -507,7 +507,7 @@ export const localeText = {
       hns: 'Handshake / HNS',
       icann: 'ICANN / DNS normal',
       delegated: 'DNS autoritativo delegado',
-      hnsInline: 'Modo IP direta HNS',
+      hnsInline: 'Nameserver SYNTH HNS',
       genericZone: 'Arquivo de zona genérico',
       hostedDns: 'Painel de provedor DNS hospedado',
       powerdns: 'PowerDNS Authoritative',
@@ -530,12 +530,12 @@ export const localeText = {
       ok: 'OK',
       warn: 'Verificar',
       missing: 'Necessário',
-      labels: { Domain: 'Domínio', 'Website IP': 'IP do site', 'HNS inline': 'HNS direto', DANE: 'DANE', Nameserver: 'Nameserver', Glue: 'Glue', DS: 'DS', TLSA: 'TLSA' }
+      labels: { Domain: 'Domínio', 'Website IP': 'IP do site', 'HNS inline': 'HNS SYNTH', DANE: 'DANE', Nameserver: 'Nameserver', Glue: 'Glue', DS: 'DS', TLSA: 'TLSA' }
     },
     notices: { title: 'Precisa de atenção' },
     summary: {
       aria: 'resumo da configuração atual',
-      hnsInline: 'IP direta HNS',
+      hnsInline: 'Nameserver SYNTH HNS',
       delegated: 'DNSSEC + DANE delegado',
       glueRequired: 'Glue necessário',
       externalNameserver: 'Nameserver externo',
@@ -560,7 +560,7 @@ export const localeText = {
       presetSummary: 'Qual preset devo escolher?',
       presetBody: 'Use DNS hospedado se seu provedor suporta DNSSEC e TLSA. Use arquivo de zona genérico ao adaptar registros para BIND, Knot, NSD ou outro servidor. Use PowerDNS se quiser DNS com banco de dados ou API.',
       splitSummary: 'O que vai na carteira/registrador versus no servidor DNS?',
-      splitBody: 'A carteira ou registrador recebe NS/GLUE/DS. O servidor DNS autoritativo recebe NS/A/AAAA/TLSA e assina a zona. TLSA é um registro do servidor DNS, não da carteira.',
+      splitBody: 'A carteira ou registrador recebe NS/GLUE ou SYNTH, mais DS. O servidor DNS autoritativo recebe NS/A/AAAA/TLSA e assina a zona. TLSA é um registro do servidor DNS, não da carteira.',
       dnskeySummary: 'Quando colo a DNSKEY?',
       dnskeyBody: 'Cole DNSKEY depois que a zona autoritativa estiver assinada com DNSSEC. Esta página usa isso para gerar o registro DS do parent; ela não assina a zona nem armazena chaves DNSSEC privadas.',
       idnSummary: 'Posso usar um domínio internacionalizado?',
@@ -583,13 +583,13 @@ export const localeText = {
         done: 'DNSSEC と TLSA を公開して DANE Web サイトを配信できるようにします。'
       }
     },
-    examples: { hnsDelegated: 'HNS 委任', hnsInline: 'HNS 直接 IP', icann: 'ICANN DNSSEC' },
+    examples: { hnsDelegated: 'HNS 委任', hnsInline: 'HNS SYNTH ネームサーバー', icann: 'ICANN DNSSEC' },
     sections: { domain: '1. ドメイン', server: '2. サーバー', dane: '3. DANE' },
     fields: {
       domainType: 'ドメイン種別',
       domainTypeHelp: 'HNS はウォレット/名前リソース、ICANN はレジストラ画面を意味します。',
       setupMode: '設定モード',
-      setupModeHelp: '委任モードは DNSSEC + DANE 用です。HNS 直接モードは IP だけを指します。',
+      setupModeHelp: '名前付きモードはネームサーバー名を使います。SYNTH モードは HNS にネームサーバー IP を保存します。どちらも権威 DNS を使います。',
       domain: 'ドメイン',
       domainHelp: '例: example/ または example.com',
       dnsServerPreset: 'DNS サーバープリセット',
@@ -615,7 +615,7 @@ export const localeText = {
       hns: 'Handshake / HNS',
       icann: 'ICANN / 通常 DNS',
       delegated: '委任された権威 DNS',
-      hnsInline: 'HNS 直接 IP モード',
+      hnsInline: 'HNS SYNTH ネームサーバー',
       genericZone: '汎用ゾーンファイル',
       hostedDns: 'ホスト型 DNS プロバイダー画面',
       powerdns: 'PowerDNS Authoritative',
@@ -638,12 +638,12 @@ export const localeText = {
       ok: 'OK',
       warn: '確認',
       missing: '必要',
-      labels: { Domain: 'ドメイン', 'Website IP': 'Web IP', 'HNS inline': 'HNS 直接', DANE: 'DANE', Nameserver: 'ネームサーバー', Glue: 'Glue', DS: 'DS', TLSA: 'TLSA' }
+      labels: { Domain: 'ドメイン', 'Website IP': 'Web IP', 'HNS inline': 'HNS SYNTH', DANE: 'DANE', Nameserver: 'ネームサーバー', Glue: 'Glue', DS: 'DS', TLSA: 'TLSA' }
     },
     notices: { title: '確認が必要' },
     summary: {
       aria: '現在の設定概要',
-      hnsInline: 'HNS 直接 IP',
+      hnsInline: 'HNS SYNTH ネームサーバー',
       delegated: '委任 DNSSEC + DANE',
       glueRequired: 'Glue が必要',
       externalNameserver: '外部ネームサーバー',
@@ -668,7 +668,7 @@ export const localeText = {
       presetSummary: 'どのプリセットを選ぶべきですか?',
       presetBody: 'プロバイダーが DNSSEC と TLSA をサポートしているならホスト型 DNS を使います。BIND、Knot、NSD などへ合わせるなら汎用ゾーンファイルを使います。DB/API ベースの DNS なら PowerDNS を使います。',
       splitSummary: 'ウォレット/レジストラと DNS サーバーには何を入れますか?',
-      splitBody: 'ウォレットまたはレジストラには NS/GLUE/DS を入れます。権威 DNS サーバーには NS/A/AAAA/TLSA を入れてゾーンを署名します。TLSA はウォレットではなく DNS サーバー側のレコードです。',
+      splitBody: 'ウォレットまたはレジストラには NS/GLUE または SYNTH と DS を入れます。権威 DNS サーバーには NS/A/AAAA/TLSA を入れてゾーンを署名します。TLSA はウォレットではなく DNS サーバー側のレコードです。',
       dnskeySummary: 'DNSKEY はいつ貼り付けますか?',
       dnskeyBody: '権威ゾーンが DNSSEC 署名された後に DNSKEY を貼ります。このページは親側 DS を生成するだけで、ゾーン署名や秘密 DNSSEC 鍵の保存はしません。',
       idnSummary: '国際化ドメイン名は使えますか?',

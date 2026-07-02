@@ -18,6 +18,8 @@ For an HNS name such as `example/`:
 5. Enable DNSSEC signing.
 6. Publish the DS record in the HNS wallet.
 
+For HNS names, **SYNTH nameserver** is also supported. It stores the authoritative nameserver IP in the HNS resource as `SYNTH4` or `SYNTH6`; the DNS server still publishes the website `A`/`AAAA`, `TLSA`, and signed DNSSEC records.
+
 ## Easiest DNS server choice
 
 - **Hosted DNS provider panel**: easiest if the provider supports DNSSEC signing, DS/DNSKEY export, and custom TLSA records.
@@ -80,6 +82,10 @@ The standards tracked by this project are in [Internationalization standards](I1
 ### Do I need glue?
 
 Glue is needed when the nameserver is inside the same zone. For `example/` using `ns1.example.`, publish `GLUE4` or `GLUE6` in the HNS wallet. If the nameserver is external, such as a provider nameserver, publish `NS` instead.
+
+### Is SYNTH the website IP?
+
+No. `SYNTH4` and `SYNTH6` are HNS nameserver referrals. They tell resolvers how to reach the authoritative DNS server. The website IP belongs in the authoritative zone as `A` or `AAAA`.
 
 ### When do I paste DNSKEY?
 

@@ -97,6 +97,8 @@ export function dnskeyWarnings(input: string): string[] {
   const dnskey = parseDnskey(input);
   if (dnskey.protocol !== 3) warnings.push('DNSKEY protocol is normally 3. Check that the DNSKEY line was pasted correctly.');
   if ((dnskey.flags & 0x0001) !== 0x0001) warnings.push('The DNSKEY does not have the SEP/KSK flag. DS records are normally made from the KSK.');
-  if ([5, 7].includes(dnskey.algorithm)) warnings.push('This DNSKEY uses an older RSA/SHA-1 family algorithm. Prefer modern DNSSEC algorithms when the DNS server supports them.');
+  if ([1, 3, 5, 6, 7, 12].includes(dnskey.algorithm)) {
+    warnings.push('This DNSKEY algorithm is not recommended for new DNSSEC signing. Prefer a currently supported algorithm such as 8, 13, or 15 when the DNS server supports it.');
+  }
   return warnings;
 }

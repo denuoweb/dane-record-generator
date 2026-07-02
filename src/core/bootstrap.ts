@@ -1,5 +1,5 @@
 import type { BootstrapInput, BootstrapNotice, BootstrapResult, DnsServerPreset, DsRecord, GeneratedLine, HnsParentRecordDraft, OutputSection, StatusCheck } from './types';
-import { displayDomain, isInBailiwick, normalizeDomain, normalizeHostname, tlsaOwnerName, validateDomainName, validateHostname, validateIpv4, validateIpv6, validateTtl } from './domain';
+import { displayDomain, isInBailiwick, normalizeDomain, normalizeHostname, synthNameserverName, tlsaOwnerName, validateDomainName, validateHostname, validateIpv4, validateIpv6, validateTtl } from './domain';
 import { dnskeyWarnings, formatDsRecord, generateDsRecord } from './dnssec';
 import { generateServerPreset, recommendedPresetTip, serverPresetLabel } from './serverPresets';
 import { generateTlsaRecord } from './tlsa';
@@ -52,7 +52,7 @@ function validateInputs(input: BootstrapInput, domain: string): BootstrapNotice[
   if (!validateTtl(input.ttl ?? 3600)) notices.push(notice('warning', 'TTL should normally be between 60 and 86400 seconds.'));
 
   if (input.setupMode === 'hns-inline' && input.domainType !== 'hns') {
-    notices.push(notice('warning', 'Inline SYNTH mode is HNS-only. ICANN output uses delegated DNS.'));
+    notices.push(notice('warning', 'SYNTH nameserver mode is HNS-only. ICANN output uses named DNS delegation.'));
   }
 
   if (nonEmpty(input.websiteIpv4) && !validateIpv4(input.websiteIpv4)) notices.push(notice('error', 'Website IPv4 address is not valid.'));
@@ -65,9 +65,13 @@ function validateInputs(input: BootstrapInput, domain: string): BootstrapNotice[
     else if (!validateHostname(input.nameserverHost)) notices.push(notice('error', 'Nameserver hostname is not valid.'));
   }
 
+  if (input.setupMode === 'hns-inline' && input.domainType === 'hns' && !nonEmpty(input.nameserverIpv4) && !nonEmpty(input.nameserverIpv6)) {
+    notices.push(notice('error', 'HNS SYNTH mode needs at least one nameserver IP address.'));
+  }
+
   if (!nonEmpty(input.websiteIpv4) && !nonEmpty(input.websiteIpv6)) notices.push(notice('error', 'No website A or AAAA address was supplied.'));
 
-  if (nonEmpty(input.nameserverHost) && isInBailiwick(input.nameserverHost, domain) && !nonEmpty(input.nameserverIpv4) && !nonEmpty(input.nameserverIpv6)) {
+  if (input.setupMode === 'delegated' && nonEmpty(input.nameserverHost) && isInBailiwick(input.nameserverHost, domain) && !nonEmpty(input.nameserverIpv4) && !nonEmpty(input.nameserverIpv6)) {
     notices.push(notice('error', 'The nameserver is inside the same zone, so glue is required. Add at least one nameserver IP address.'));
   }
 
@@ -79,7 +83,7 @@ function validateInputs(input: BootstrapInput, domain: string): BootstrapNotice[
     }
   }
 
-  if (!nonEmpty(input.dnskeyInput) && nonEmpty(input.pemInput) && input.setupMode === 'delegated') {
+  if (!nonEmpty(input.dnskeyInput) && nonEmpty(input.pemInput) && ['delegated', 'hns-inline'].includes(input.setupMode)) {
     notices.push(notice('warning', 'TLSA is generated, but DNSSEC is incomplete until you publish a parent-side DS record.'));
   }
 
@@ -103,12 +107,12 @@ function defaultHelpTips(domainType: BootstrapInput['domainType'], setupMode: Bo
     'Internationalized names are accepted as input, but DNS records use IDNA A-labels such as xn--bcher-kva.example.'
   ];
 
-  if (domainType === 'hns') {
+  if (domainType === 'hns' && setupMode === 'delegated') {
     tips.push(`For HNS delegated mode, GLUE4/GLUE6 is needed when the nameserver lives under the HNS name itself, such as ${nameserver} for ${rootless(domain)}/.`);
   }
 
   if (setupMode === 'hns-inline') {
-    tips.push('HNS inline mode is the simplest IP-only setup. Use delegated mode when you want DNSSEC and DANE.');
+    tips.push('HNS SYNTH mode stores nameserver IPs in the HNS resource. Website A/AAAA and TLSA records still live on the authoritative DNS server.');
   }
 
   return tips;
@@ -117,9 +121,10 @@ function defaultHelpTips(domainType: BootstrapInput['domainType'], setupMode: Bo
 function buildQuickSteps(input: BootstrapInput, effectiveMode: BootstrapInput['setupMode'], hasDs: boolean, hasTlsa: boolean): GeneratedLine[] {
   if (effectiveMode === 'hns-inline') {
     return [
-      { value: '1. Copy SYNTH4/SYNTH6 into the HNS wallet.', explanation: 'This points the HNS name directly at the web server IP.' },
-      { value: '2. Make the web server answer on that IP.', explanation: 'No separate authoritative DNS server is needed for this mode.' },
-      { value: '3. Switch to delegated mode for DNSSEC/DANE.', explanation: 'DANE expects TLSA inside a signed authoritative DNS zone.' }
+      { value: '1. Put the server records on the authoritative DNS server.', explanation: 'SYNTH points resolvers to nameserver IPs; the zone still serves A/AAAA/TLSA.' },
+      { value: '2. Enable DNSSEC signing on the zone.', explanation: 'The DNS server should manage the signing keys and signed zone.' },
+      { value: hasDs ? '3. Send SYNTH and DS records to the HNS wallet.' : '3. Paste the DNSKEY here, then send SYNTH and DS records to the HNS wallet.', explanation: 'SYNTH is the parent-side referral; DS connects DNSSEC to the signed zone.' },
+      { value: hasTlsa ? '4. Serve the matching HTTPS certificate/key.' : '4. Paste the leaf certificate or PUBLIC KEY to generate TLSA.', explanation: 'TLSA goes on the authoritative DNS server.' }
     ];
   }
 
@@ -139,8 +144,9 @@ function buildStatusChecks(input: BootstrapInput, effectiveMode: BootstrapInput[
   ];
 
   if (effectiveMode === 'hns-inline') {
-    checks.push(check('HNS inline', 'ok', 'Only SYNTH4/SYNTH6 wallet output is needed.'));
-    checks.push(check('DANE', 'warn', 'Use delegated mode for DNSSEC + TLSA/DANE.'));
+    checks.push(check('Nameserver', nonEmpty(input.nameserverIpv4) || nonEmpty(input.nameserverIpv6) ? 'ok' : 'missing', nonEmpty(input.nameserverIpv4) || nonEmpty(input.nameserverIpv6) ? 'SYNTH nameserver IP can be generated.' : 'Add at least one nameserver IPv4 or IPv6 address.'));
+    checks.push(check('DS', hasDs ? 'ok' : 'missing', hasDs ? 'Parent-side DS is generated from DNSKEY.' : 'Paste DNSKEY after signing the authoritative zone.'));
+    checks.push(check('TLSA', hasTlsa ? 'ok' : 'missing', hasTlsa ? 'TLSA is generated from certificate/public key.' : 'Paste a certificate or PUBLIC KEY to generate TLSA.'));
     return checks;
   }
 
@@ -155,8 +161,14 @@ function buildStatusChecks(input: BootstrapInput, effectiveMode: BootstrapInput[
 function buildVerificationCommands(input: BootstrapInput, effectiveMode: BootstrapInput['setupMode'], domain: string, ns: string, owner: string): GeneratedLine[] {
   if (effectiveMode === 'hns-inline') {
     return [{
-      value: `# After the HNS update confirms, test with an HNS-aware resolver/browser.\n# Expected address: ${input.websiteIpv4 || input.websiteIpv6 || '<website-ip>'}`,
-      explanation: 'Inline SYNTH records do not require an authoritative DNS server test.'
+      value: [
+        `dig @${input.nameserverIpv4 || input.nameserverIpv6 || '<nameserver-ip>'} ${domain} SOA +norecurse`,
+        ...(input.websiteIpv4 ? [`dig @${input.nameserverIpv4 || input.nameserverIpv6 || '<nameserver-ip>'} ${domain} A +dnssec +norecurse`] : []),
+        ...(input.websiteIpv6 ? [`dig @${input.nameserverIpv4 || input.nameserverIpv6 || '<nameserver-ip>'} ${domain} AAAA +dnssec +norecurse`] : []),
+        `dig @${input.nameserverIpv4 || input.nameserverIpv6 || '<nameserver-ip>'} ${owner} TLSA +dnssec +norecurse`,
+        '# After the HNS update confirms, test full-chain resolution with an HNS-aware resolver/browser.'
+      ].join('\n'),
+      explanation: 'Commands to check that the SYNTH-addressed authoritative server answers before and after the HNS update.'
     }];
   }
 
@@ -233,6 +245,7 @@ export async function generateBootstrap(input: BootstrapInput): Promise<Bootstra
   let dsRecord: DsRecord | undefined;
   let inBailiwickNameserver = false;
   let ns = 'ns1.example.';
+  let authoritativeNsHosts: string[] = [];
 
   if (nonEmpty(input.pemInput)) {
     try {
@@ -259,17 +272,27 @@ export async function generateBootstrap(input: BootstrapInput): Promise<Bootstra
   }
 
   if (effectiveMode === 'hns-inline') {
-    if (nonEmpty(input.websiteIpv4)) {
-      parentRecords.push({ value: `SYNTH4 ${input.websiteIpv4}`, explanation: 'HNS wallet-side direct IPv4 address record for the name.' });
-      parentDraft.push({ type: 'SYNTH4', address: input.websiteIpv4 });
+    if (nonEmpty(input.nameserverIpv4) && validateIpv4(input.nameserverIpv4)) {
+      parentRecords.push({ value: `SYNTH4 ${input.nameserverIpv4}`, explanation: 'HNS wallet-side synthetic IPv4 nameserver referral.' });
+      parentDraft.push({ type: 'SYNTH4', address: input.nameserverIpv4 });
+      authoritativeNsHosts.push(synthNameserverName(input.nameserverIpv4));
     }
-    if (nonEmpty(input.websiteIpv6)) {
-      parentRecords.push({ value: `SYNTH6 ${input.websiteIpv6}`, explanation: 'HNS wallet-side direct IPv6 address record for the name.' });
-      parentDraft.push({ type: 'SYNTH6', address: input.websiteIpv6 });
+    if (nonEmpty(input.nameserverIpv6) && validateIpv6(input.nameserverIpv6)) {
+      parentRecords.push({ value: `SYNTH6 ${input.nameserverIpv6}`, explanation: 'HNS wallet-side synthetic IPv6 nameserver referral.' });
+      parentDraft.push({ type: 'SYNTH6', address: input.nameserverIpv6 });
+      authoritativeNsHosts.push(synthNameserverName(input.nameserverIpv6));
+    }
+    ns = authoritativeNsHosts[0] ?? ns;
+    if (dsRecord && dsRecordText) {
+      parentRecords.push({ value: dsRecordText, explanation: 'HNS wallet-side DNSSEC delegation signer record derived from the child-zone DNSKEY.' });
+      parentDraft.push(dsToDraft(dsRecord));
+    } else {
+      parentRecords.push({ value: 'DS <keytag> <algorithm> 2 <sha256-digest>', explanation: 'Placeholder: paste your authoritative-zone DNSKEY to generate the exact parent-side DS record.' });
     }
   } else {
     ns = input.nameserverHost ? normalizeHostname(input.nameserverHost) : `ns1.${normalizedDomain}`;
     inBailiwickNameserver = input.nameserverHost ? isInBailiwick(ns, normalizedDomain) : true;
+    authoritativeNsHosts = [ns];
 
     if (input.domainType === 'hns') {
       if (inBailiwickNameserver) {
@@ -309,7 +332,12 @@ export async function generateBootstrap(input: BootstrapInput): Promise<Bootstra
       });
     }
 
-    authoritativeRecords.push({ value: `${normalizedDomain} ${ttl} IN NS ${ns}`, explanation: 'Authoritative-zone NS record naming the server responsible for this zone.' });
+  }
+
+  if (effectiveMode === 'delegated' || effectiveMode === 'hns-inline') {
+    authoritativeNsHosts.forEach((nameserver) => {
+      authoritativeRecords.push({ value: `${normalizedDomain} ${ttl} IN NS ${nameserver}`, explanation: 'Authoritative-zone NS record naming a server responsible for this zone.' });
+    });
     authoritativeRecords.push(
       ...optionalLine(nonEmpty(input.websiteIpv4), {
         value: `${normalizedDomain} ${ttl} IN A ${input.websiteIpv4}`,
@@ -334,11 +362,12 @@ export async function generateBootstrap(input: BootstrapInput): Promise<Bootstra
     explanation: 'The TLS server serves a normal certificate. A DANE-aware client verifies the DNSSEC-protected TLSA record.'
   });
 
-  const serverPresetRecords = effectiveMode === 'delegated'
+  const serverPresetRecords = effectiveMode === 'delegated' || effectiveMode === 'hns-inline'
     ? generateServerPreset({
       preset,
       domain: normalizedDomain,
       nameserverHost: ns,
+      nameserverHosts: authoritativeNsHosts,
       ttl,
       websiteIpv4: input.websiteIpv4,
       websiteIpv6: input.websiteIpv6,

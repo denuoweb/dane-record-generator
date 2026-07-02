@@ -1,6 +1,7 @@
 import type { DomainType, TransportProtocol } from './types';
 
 const HOST_LABEL_RE = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
+const BASE32HEX = '0123456789abcdefghijklmnopqrstuv';
 
 function stripProtocolAndPath(input: string): string {
   return input
@@ -75,6 +76,53 @@ export function relativeName(ownerName: string, zone: string): string {
   if (owner === normalizedZone) return '@';
   if (owner.endsWith(`.${normalizedZone}`)) return owner.slice(0, -normalizedZone.length - 1);
   return owner;
+}
+
+function bytesToBase32Hex(bytes: Uint8Array): string {
+  let bits = 0;
+  let value = 0;
+  let output = '';
+  for (const byte of bytes) {
+    value = (value << 8) | byte;
+    bits += 8;
+    while (bits >= 5) {
+      output += BASE32HEX[(value >> (bits - 5)) & 31];
+      bits -= 5;
+    }
+  }
+  if (bits > 0) output += BASE32HEX[(value << (5 - bits)) & 31];
+  return output;
+}
+
+function ipv4Bytes(value: string): Uint8Array | null {
+  if (!validateIpv4(value)) return null;
+  return new Uint8Array(value.trim().split('.').map((part) => Number(part)));
+}
+
+function ipv6Bytes(value: string): Uint8Array | null {
+  if (!validateIpv6(value)) return null;
+  const input = value.trim().toLowerCase();
+  const [headText, tailText] = input.split('::');
+  const head = headText ? headText.split(':') : [];
+  const tail = tailText ? tailText.split(':') : [];
+  const missing = 8 - head.length - tail.length;
+  if (missing < 0) return null;
+  const groups = [...head, ...Array.from({ length: missing }, () => '0'), ...tail];
+  if (groups.length !== 8) return null;
+  const bytes = new Uint8Array(16);
+  for (let index = 0; index < groups.length; index += 1) {
+    const group = Number.parseInt(groups[index], 16);
+    if (!Number.isInteger(group) || group < 0 || group > 0xffff) return null;
+    bytes[index * 2] = (group >> 8) & 0xff;
+    bytes[index * 2 + 1] = group & 0xff;
+  }
+  return bytes;
+}
+
+export function synthNameserverName(address: string): string {
+  const bytes = ipv4Bytes(address) ?? ipv6Bytes(address);
+  if (!bytes) throw new Error('SYNTH nameserver address must be valid IPv4 or IPv6.');
+  return `_${bytesToBase32Hex(bytes)}._synth.`;
 }
 
 export function validateIpv4(value: string): boolean {

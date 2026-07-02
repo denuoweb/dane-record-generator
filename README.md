@@ -36,15 +36,20 @@ example. 3600 IN A 203.0.113.20
 _443._tcp.example. 3600 IN TLSA 3 1 1 9B2C...A811
 ```
 
-### HNS inline IP mode
+### HNS SYNTH nameserver mode
 
-Simplest HNS-to-IP pointer:
+Compact HNS referral to an authoritative nameserver IP. The website address and TLSA record still live on the authoritative DNS server:
 
 ```zone
-SYNTH4 203.0.113.20
-```
+# HNS wallet / name resource
+SYNTH4 203.0.113.10
+DS 12345 13 2 7A1B...F09C
 
-Use delegated mode for DNSSEC and DANE.
+# Authoritative DNS server
+example. 3600 IN NS _pc0722g._synth.
+example. 3600 IN A 203.0.113.20
+_443._tcp.example. 3600 IN TLSA 3 1 1 9B2C...A811
+```
 
 ### ICANN delegated DNSSEC mode
 
@@ -105,6 +110,10 @@ Use **Hosted DNS provider panel** if your provider supports DNSSEC signing, DS o
 
 Only parent-side delegation material: nameserver, glue when needed, and DS. TLSA goes on the authoritative DNS server, not in the wallet or registrar.
 
+### Is SYNTH a website IP shortcut?
+
+No. HNS `SYNTH4` and `SYNTH6` encode nameserver IPs for a synthetic `_..._synth.` nameserver. The authoritative DNS server still publishes website `A`/`AAAA`, `TLSA`, and signed DNSSEC records.
+
 ### When do I paste DNSKEY?
 
 After the authoritative zone is signed. Paste the public DNSKEY into this app to generate the DS record for the parent.
@@ -160,7 +169,7 @@ const result = await generateBootstrap({
 
 - DNSSEC: RFC 4034, RFC 4509.
 - DANE/TLSA: RFC 6698, RFC 7671.
-- DNSSEC algorithm guidance: RFC 8624, RFC 9905.
+- DNSSEC algorithm guidance: IANA DNS Security Algorithm Numbers, IANA DS Digest Algorithms, RFC 9904, RFC 9905.
 - IDNA/i18n: RFC 5890-5894, RFC 3492, Unicode UTS #46.
 - Future email i18n scope: RFC 6530-6533.
 - Handshake resources: HNS `NS`, `DS`, `GLUE4`, `GLUE6`, `SYNTH4`, `SYNTH6`.

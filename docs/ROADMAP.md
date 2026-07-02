@@ -5,7 +5,7 @@
 Completed foundation:
 
 - HNS delegated mode
-- HNS inline IP mode
+- HNS SYNTH nameserver mode
 - ICANN delegated mode
 - TLSA 3 1 1 from PEM PUBLIC KEY
 - TLSA 3 1 1 from PEM CERTIFICATE

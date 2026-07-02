@@ -6,7 +6,14 @@ type CoreCopy = {
   statusDetails: Record<string, string>;
   explanations: Record<string, string>;
   quickSteps: {
-    inline: string[];
+    inline: {
+      server: string;
+      dnssec: string;
+      dsReady: string;
+      dsMissing: string;
+      tlsaReady: string;
+      tlsaMissing: string;
+    };
     delegated: {
       server: string;
       dnssec: string;
@@ -46,11 +53,14 @@ const en: CoreCopy = {
   statusDetails: {},
   explanations: {},
   quickSteps: {
-    inline: [
-      '1. Copy SYNTH4/SYNTH6 into the HNS wallet.',
-      '2. Make the web server answer on that IP.',
-      '3. Switch to delegated mode for DNSSEC/DANE.'
-    ],
+    inline: {
+      server: '1. Put the server records on the authoritative DNS server.',
+      dnssec: '2. Enable DNSSEC signing on the zone.',
+      dsReady: '3. Send SYNTH and DS records to the HNS wallet.',
+      dsMissing: '3. Paste the DNSKEY here, then send SYNTH and DS records to the HNS wallet.',
+      tlsaReady: '4. Serve the matching HTTPS certificate/key.',
+      tlsaMissing: '4. Paste the leaf certificate or PUBLIC KEY to generate TLSA.'
+    },
     delegated: {
       server: '1. Put the server records on the authoritative DNS server.',
       dnssec: '2. Enable DNSSEC signing on the zone.',
@@ -67,7 +77,7 @@ const en: CoreCopy = {
     noPlugin: 'Nginx/Apache/Caddy do not need a DANE plugin; DANE lives in DNS.'
   },
   verify: {
-    hnsInline: '# After the HNS update confirms, test with an HNS-aware resolver/browser.',
+    hnsInline: '# After the HNS update confirms, test full-chain resolution with an HNS-aware resolver/browser.',
     expectedAddress: '# Expected address',
     hnsFullChain: '# For HNS full-chain tests, query through your HNS-aware resolver after the wallet update confirms.'
   },
@@ -80,7 +90,7 @@ const en: CoreCopy = {
     parentSplit: 'Parent records and server records are different. The wallet or registrar delegates. The DNS server publishes the site records and TLSA.',
     idna: 'Internationalized names are accepted as input, but DNS records use IDNA A-labels such as xn--bcher-kva.example.',
     hnsGlue: (nameserver, domain) => `For HNS delegated mode, GLUE4/GLUE6 is needed when the nameserver lives under the HNS name itself, such as ${nameserver} for ${domain}/.`,
-    hnsInline: 'HNS inline mode is the simplest IP-only setup. Use delegated mode when you want DNSSEC and DANE.',
+    hnsInline: 'HNS SYNTH mode stores nameserver IPs in the HNS resource. Website A/AAAA and TLSA records still live on the authoritative DNS server.',
     preset: {
       'generic-zone': 'Generic zone-file output works with BIND, Knot, NSD, and many DNS hosting import tools.',
       'hosted-dns': 'Hosted DNS is the shortest path if your provider supports DNSSEC, custom DS export, and TLSA records.',
@@ -96,7 +106,8 @@ const noticesEn = {
   invalidDomain: 'Domain format is not valid for DNS output.',
   idna: 'Internationalized domain input is converted to DNS ASCII A-labels such as xn--... in generated records.',
   ttl: 'TTL should normally be between 60 and 86400 seconds.',
-  inlineIcann: 'Inline SYNTH mode is HNS-only. ICANN output uses delegated DNS.',
+  inlineIcann: 'SYNTH nameserver mode is HNS-only. ICANN output uses named DNS delegation.',
+  synthNsMissing: 'HNS SYNTH mode needs at least one nameserver IP address.',
   websiteIpv4: 'Website IPv4 address is not valid.',
   websiteIpv6: 'Website IPv6 address is not valid.',
   nsIpv4: 'Nameserver IPv4 address is not valid.',
@@ -111,7 +122,7 @@ const noticesEn = {
   dsError: 'Unable to generate DS record from DNSKEY input.',
   dnskeyProtocol: 'DNSKEY protocol is normally 3. Check that the DNSKEY line was pasted correctly.',
   dnskeySep: 'The DNSKEY does not have the SEP/KSK flag. DS records are normally made from the KSK.',
-  dnskeySha1: 'This DNSKEY uses an older RSA/SHA-1 family algorithm. Prefer modern DNSSEC algorithms when the DNS server supports them.'
+  dnskeySha1: 'This DNSKEY algorithm is not recommended for new DNSSEC signing. Prefer a currently supported algorithm such as 8, 13, or 15 when the DNS server supports it.'
 } as const;
 
 const detailsEn = {
@@ -119,8 +130,8 @@ const detailsEn = {
   domainMissing: 'Enter the HNS name or ICANN domain.',
   websiteOk: 'A/AAAA output can be generated.',
   websiteMissing: 'Add at least one website IPv4 or IPv6 address.',
-  inlineOk: 'Only SYNTH4/SYNTH6 wallet output is needed.',
-  daneInline: 'Use delegated mode for DNSSEC + TLSA/DANE.',
+  synthNsOk: 'SYNTH nameserver IP can be generated.',
+  synthNsMissing: 'Add at least one nameserver IPv4 or IPv6 address.',
   nsOk: 'Delegation target is present.',
   nsMissing: 'Add the authoritative nameserver hostname.',
   glueInZone: 'Nameserver is inside the zone, so glue must be in the parent records.',
@@ -132,8 +143,8 @@ const detailsEn = {
 } as const;
 
 const explanationsEn = {
-  inline4: 'HNS wallet-side direct IPv4 address record for the name.',
-  inline6: 'HNS wallet-side direct IPv6 address record for the name.',
+  inline4: 'HNS wallet-side synthetic IPv4 nameserver referral.',
+  inline6: 'HNS wallet-side synthetic IPv6 nameserver referral.',
   glue4: 'HNS wallet-side glue record for the IPv4 address of your in-name authoritative nameserver.',
   glue6: 'HNS wallet-side glue record for the IPv6 address of your in-name authoritative nameserver.',
   hnsNs: 'HNS wallet-side delegation record pointing the name at an external authoritative nameserver.',
@@ -144,7 +155,7 @@ const explanationsEn = {
   registrarGlue6: 'Registrar-side IPv6 glue is needed because the nameserver is inside the delegated domain.',
   registrarDs: 'Registrar-side DS record derived from the child-zone DNSKEY.',
   registrarDsPlaceholder: 'Placeholder: paste your authoritative-zone DNSKEY to generate the exact registrar-side DS record.',
-  authNs: 'Authoritative-zone NS record naming the server responsible for this zone.',
+  authNs: 'Authoritative-zone NS record naming a server responsible for this zone.',
   authA: 'Authoritative-zone IPv4 address for the website apex.',
   authAaaa: 'Authoritative-zone IPv6 address for the website apex.',
   authTlsa: 'Authoritative-zone DANE/TLSA record for the TLS service.',
@@ -153,11 +164,11 @@ const explanationsEn = {
   webNoPlugin: 'The TLS server serves a normal certificate. A DANE-aware client verifies the DNSSEC-protected TLSA record.',
   serverPreset: 'Server-side starter snippet. Create the zone, publish NS/A/AAAA/TLSA, enable DNSSEC signing, then publish DS at the parent.',
   verifyDelegated: 'Commands to check that the authoritative server answers before and after parent-side delegation.',
-  verifyInline: 'Inline SYNTH records do not require an authoritative DNS server test.',
+  verifyInline: 'Commands to check that the SYNTH-addressed authoritative server answers before and after the HNS update.',
   integrator: 'Machine-readable output for wallets, future APIs, or integration tests. It is not automatically submitted anywhere.',
-  stepInline1: 'This points the HNS name directly at the web server IP.',
-  stepInline2: 'No separate authoritative DNS server is needed for this mode.',
-  stepInline3: 'DANE expects TLSA inside a signed authoritative DNS zone.',
+  stepInline1: 'SYNTH points resolvers to nameserver IPs; the zone still serves A/AAAA/TLSA.',
+  stepInline2: 'The DNS server should manage the signing keys and signed zone.',
+  stepInline3: 'SYNTH is the parent-side referral; DS connects DNSSEC to the signed zone.',
   stepServer: 'Use the selected server preset or the generic zone-file output.',
   stepDnssec: 'The DNS server should manage the signing keys and signed zone.',
   stepDs: 'The DS connects the parent layer to the signed child zone.',
@@ -186,7 +197,8 @@ const copy: Record<LanguageCode, CoreCopy> = {
       invalidDomain: 'El formato del dominio no es válido para salida DNS.',
       idna: 'La entrada de dominio internacionalizado se convierte a A-labels ASCII DNS como xn--... en los registros generados.',
       ttl: 'El TTL normalmente debe estar entre 60 y 86400 segundos.',
-      inlineIcann: 'El modo SYNTH directo solo es para HNS. La salida ICANN usa DNS delegado.',
+      inlineIcann: 'El modo nameserver SYNTH solo es para HNS. La salida ICANN usa delegación DNS con nombre.',
+      synthNsMissing: 'El modo HNS SYNTH necesita al menos una IP de nameserver.',
       websiteIpv4: 'La dirección IPv4 del sitio web no es válida.',
       websiteIpv6: 'La dirección IPv6 del sitio web no es válida.',
       nsIpv4: 'La dirección IPv4 del servidor DNS no es válida.',
@@ -201,15 +213,15 @@ const copy: Record<LanguageCode, CoreCopy> = {
       dsError: 'No se pudo generar el registro DS desde la DNSKEY.',
       dnskeyProtocol: 'El protocolo DNSKEY normalmente es 3. Revisa que la línea DNSKEY se haya pegado correctamente.',
       dnskeySep: 'La DNSKEY no tiene la bandera SEP/KSK. Los registros DS normalmente se hacen desde la KSK.',
-      dnskeySha1: 'Esta DNSKEY usa un algoritmo antiguo de la familia RSA/SHA-1. Prefiere algoritmos DNSSEC modernos cuando el servidor los soporte.'
+      dnskeySha1: 'Este algoritmo DNSKEY no se recomienda para nuevas firmas DNSSEC. Prefiere un algoritmo soportado actualmente, como 8, 13 o 15, cuando el servidor lo soporte.'
     },
     {
       domainOk: 'El dominio está normalizado para salida DNS.',
       domainMissing: 'Introduce el nombre HNS o dominio ICANN.',
       websiteOk: 'Se puede generar salida A/AAAA.',
       websiteMissing: 'Agrega al menos una dirección IPv4 o IPv6 del sitio web.',
-      inlineOk: 'Solo se necesita salida SYNTH4/SYNTH6 para la cartera.',
-      daneInline: 'Usa modo delegado para DNSSEC + TLSA/DANE.',
+      synthNsOk: 'Se puede generar la IP de nameserver SYNTH.',
+      synthNsMissing: 'Agrega al menos una dirección IPv4 o IPv6 de nameserver.',
       nsOk: 'El destino de delegación está presente.',
       nsMissing: 'Agrega el hostname del servidor DNS autoritativo.',
       glueInZone: 'El servidor DNS está dentro de la zona, así que glue debe estar en los registros padre.',
@@ -220,8 +232,8 @@ const copy: Record<LanguageCode, CoreCopy> = {
       tlsaMissing: 'Pega un certificado o PUBLIC KEY para generar TLSA.'
     },
     {
-      inline4: 'Registro IPv4 directo del lado cartera HNS para el nombre.',
-      inline6: 'Registro IPv6 directo del lado cartera HNS para el nombre.',
+      inline4: 'Referencia sintética IPv4 de nameserver del lado cartera HNS.',
+      inline6: 'Referencia sintética IPv6 de nameserver del lado cartera HNS.',
       glue4: 'Registro glue HNS para la IPv4 de tu servidor DNS autoritativo bajo el mismo nombre.',
       glue6: 'Registro glue HNS para la IPv6 de tu servidor DNS autoritativo bajo el mismo nombre.',
       hnsNs: 'Registro de delegación HNS que apunta el nombre a un servidor DNS autoritativo externo.',
@@ -241,11 +253,11 @@ const copy: Record<LanguageCode, CoreCopy> = {
       webNoPlugin: 'El servidor TLS entrega un certificado normal. Un cliente DANE verifica el registro TLSA protegido por DNSSEC.',
       serverPreset: 'Ejemplo inicial del lado servidor. Crea la zona, publica NS/A/AAAA/TLSA, activa DNSSEC y luego publica DS en el padre.',
       verifyDelegated: 'Comandos para comprobar que el servidor autoritativo responde antes y después de la delegación padre.',
-      verifyInline: 'Los registros SYNTH directos no requieren una prueba de servidor DNS autoritativo.',
+      verifyInline: 'Comandos para comprobar que el servidor autoritativo direccionado por SYNTH responde antes y después de la actualización HNS.',
       integrator: 'Salida legible por máquina para carteras, APIs futuras o pruebas de integración. No se envía automáticamente.',
-      stepInline1: 'Esto apunta el nombre HNS directamente a la IP del servidor web.',
-      stepInline2: 'No se necesita un servidor DNS autoritativo separado para este modo.',
-      stepInline3: 'DANE espera TLSA dentro de una zona autoritativa firmada.',
+      stepInline1: 'SYNTH apunta los resolvedores a IPs de nameserver; la zona sigue sirviendo A/AAAA/TLSA.',
+      stepInline2: 'El servidor DNS debe gestionar las claves de firma y la zona firmada.',
+      stepInline3: 'SYNTH es la referencia del lado padre; DS conecta DNSSEC con la zona firmada.',
       stepServer: 'Usa el preset elegido o la salida de archivo de zona genérico.',
       stepDnssec: 'El servidor DNS debe gestionar las claves de firma y la zona firmada.',
       stepDs: 'El DS conecta la capa padre con la zona hija firmada.',
@@ -254,7 +266,14 @@ const copy: Record<LanguageCode, CoreCopy> = {
     },
     {
       quickSteps: {
-        inline: ['1. Copia SYNTH4/SYNTH6 en la cartera HNS.', '2. Haz que el servidor web responda en esa IP.', '3. Cambia a modo delegado para DNSSEC/DANE.'],
+        inline: {
+          server: '1. Pon los registros del servidor en el DNS autoritativo.',
+          dnssec: '2. Activa la firma DNSSEC en la zona.',
+          dsReady: '3. Envía los registros SYNTH y DS a la cartera HNS.',
+          dsMissing: '3. Pega la DNSKEY aquí y luego envía los registros SYNTH y DS a la cartera HNS.',
+          tlsaReady: '4. Sirve el certificado/clave HTTPS correspondiente.',
+          tlsaMissing: '4. Pega el certificado de hoja o PUBLIC KEY para generar TLSA.'
+        },
         delegated: {
           server: '1. Pon los registros del servidor en el DNS autoritativo.',
           dnssec: '2. Activa la firma DNSSEC en la zona.',
@@ -284,7 +303,7 @@ const copy: Record<LanguageCode, CoreCopy> = {
         parentSplit: 'Los registros padre y de servidor son distintos. La cartera o registrador delega. El DNS autoritativo publica los registros del sitio y TLSA.',
         idna: 'Se aceptan nombres internacionalizados, pero los registros DNS usan A-labels IDNA como xn--bcher-kva.example.',
         hnsGlue: (nameserver, domain) => `En modo HNS delegado, GLUE4/GLUE6 es necesario cuando el nameserver vive bajo el propio nombre HNS, como ${nameserver} para ${domain}/.`,
-        hnsInline: 'El modo HNS directo es la configuración IP más simple. Usa modo delegado cuando quieras DNSSEC y DANE.',
+        hnsInline: 'El modo HNS SYNTH guarda IPs de nameserver en el recurso HNS. Los registros A/AAAA y TLSA del sitio siguen en el servidor DNS autoritativo.',
         preset: {
           'generic-zone': 'La salida de zona genérica funciona con BIND, Knot, NSD y muchas herramientas de importación DNS.',
           'hosted-dns': 'DNS alojado es el camino más corto si tu proveedor soporta DNSSEC, exportación DS personalizada y TLSA.',
@@ -301,7 +320,8 @@ const copy: Record<LanguageCode, CoreCopy> = {
       invalidDomain: 'Le format du domaine n’est pas valide pour une sortie DNS.',
       idna: 'Le domaine internationalisé est converti en A-labels ASCII DNS comme xn--... dans les enregistrements générés.',
       ttl: 'Le TTL devrait normalement être entre 60 et 86400 secondes.',
-      inlineIcann: 'Le mode SYNTH direct est réservé à HNS. La sortie ICANN utilise DNS délégué.',
+      inlineIcann: 'Le mode serveur de noms SYNTH est réservé à HNS. La sortie ICANN utilise une délégation DNS nommée.',
+      synthNsMissing: 'Le mode HNS SYNTH nécessite au moins une adresse IP de serveur de noms.',
       websiteIpv4: 'L’adresse IPv4 du site web n’est pas valide.',
       websiteIpv6: 'L’adresse IPv6 du site web n’est pas valide.',
       nsIpv4: 'L’adresse IPv4 du serveur de noms n’est pas valide.',
@@ -316,15 +336,15 @@ const copy: Record<LanguageCode, CoreCopy> = {
       dsError: 'Impossible de générer l’enregistrement DS depuis la DNSKEY.',
       dnskeyProtocol: 'Le protocole DNSKEY est normalement 3. Vérifiez que la ligne DNSKEY a été collée correctement.',
       dnskeySep: 'La DNSKEY n’a pas le drapeau SEP/KSK. Les DS sont normalement créés depuis la KSK.',
-      dnskeySha1: 'Cette DNSKEY utilise un ancien algorithme RSA/SHA-1. Préférez les algorithmes DNSSEC modernes quand le serveur les prend en charge.'
+      dnskeySha1: 'Cet algorithme DNSKEY n’est pas recommandé pour les nouvelles signatures DNSSEC. Préférez un algorithme actuellement pris en charge, comme 8, 13 ou 15, si le serveur le prend en charge.'
     },
     {
       domainOk: 'Le domaine est normalisé pour la sortie DNS.',
       domainMissing: 'Saisissez le nom HNS ou le domaine ICANN.',
       websiteOk: 'La sortie A/AAAA peut être générée.',
       websiteMissing: 'Ajoutez au moins une adresse IPv4 ou IPv6 du site web.',
-      inlineOk: 'Seule la sortie wallet SYNTH4/SYNTH6 est nécessaire.',
-      daneInline: 'Utilisez le mode délégué pour DNSSEC + TLSA/DANE.',
+      synthNsOk: 'L’adresse IP de serveur de noms SYNTH peut être générée.',
+      synthNsMissing: 'Ajoutez au moins une adresse IPv4 ou IPv6 de serveur de noms.',
       nsOk: 'La cible de délégation est présente.',
       nsMissing: 'Ajoutez le nom du serveur DNS faisant autorité.',
       glueInZone: 'Le serveur de noms est dans la zone, donc la glue doit être dans les enregistrements parent.',
@@ -337,11 +357,21 @@ const copy: Record<LanguageCode, CoreCopy> = {
     {
       serverPreset: 'Extrait serveur de départ. Créez la zone, publiez NS/A/AAAA/TLSA, activez DNSSEC, puis publiez DS chez le parent.',
       verifyDelegated: 'Commandes pour vérifier que le serveur faisant autorité répond avant et après la délégation parente.',
+      inline4: 'Référence synthétique IPv4 de serveur de noms côté wallet HNS.',
+      inline6: 'Référence synthétique IPv6 de serveur de noms côté wallet HNS.',
+      verifyInline: 'Commandes pour vérifier que le serveur faisant autorité adressé par SYNTH répond avant et après la mise à jour HNS.',
       integrator: 'Sortie lisible par machine pour wallets, futures APIs ou tests d’intégration. Elle n’est pas soumise automatiquement.'
     },
     {
       quickSteps: {
-        inline: ['1. Copiez SYNTH4/SYNTH6 dans le wallet HNS.', '2. Faites répondre le serveur web sur cette IP.', '3. Passez au mode délégué pour DNSSEC/DANE.'],
+        inline: {
+          server: '1. Mettez les enregistrements serveur sur le DNS faisant autorité.',
+          dnssec: '2. Activez la signature DNSSEC sur la zone.',
+          dsReady: '3. Envoyez les enregistrements SYNTH et DS au wallet HNS.',
+          dsMissing: '3. Collez DNSKEY ici, puis envoyez les enregistrements SYNTH et DS au wallet HNS.',
+          tlsaReady: '4. Servez le certificat/la clé HTTPS correspondant.',
+          tlsaMissing: '4. Collez le certificat feuille ou PUBLIC KEY pour générer TLSA.'
+        },
         delegated: {
           server: '1. Mettez les enregistrements serveur sur le DNS faisant autorité.',
           dnssec: '2. Activez la signature DNSSEC sur la zone.',
@@ -371,7 +401,7 @@ const copy: Record<LanguageCode, CoreCopy> = {
         parentSplit: 'Les enregistrements parent et serveur sont différents. Le wallet ou le bureau d’enregistrement délègue. Le serveur DNS publie les enregistrements du site et TLSA.',
         idna: 'Les noms internationalisés sont acceptés en entrée, mais les enregistrements DNS utilisent des A-labels IDNA comme xn--bcher-kva.example.',
         hnsGlue: (nameserver, domain) => `En mode HNS délégué, GLUE4/GLUE6 est requis quand le serveur de noms est sous le nom HNS lui-même, comme ${nameserver} pour ${domain}/.`,
-        hnsInline: 'Le mode HNS direct est la configuration IP la plus simple. Utilisez le mode délégué pour DNSSEC et DANE.',
+        hnsInline: 'Le mode HNS SYNTH stocke les IPs de serveurs de noms dans la ressource HNS. Les enregistrements A/AAAA et TLSA du site restent sur le DNS faisant autorité.',
         preset: {
           'generic-zone': 'La sortie de zone générique fonctionne avec BIND, Knot, NSD et de nombreux outils DNS.',
           'hosted-dns': 'DNS hébergé est le chemin le plus court si le fournisseur prend en charge DNSSEC, l’export DS et TLSA.',
@@ -388,7 +418,8 @@ const copy: Record<LanguageCode, CoreCopy> = {
       invalidDomain: 'Das Domainformat ist für DNS-Ausgabe nicht gültig.',
       idna: 'Internationalisierte Domain-Eingaben werden in DNS-ASCII-A-Labels wie xn--... umgewandelt.',
       ttl: 'TTL sollte normalerweise zwischen 60 und 86400 Sekunden liegen.',
-      inlineIcann: 'Inline-SYNTH ist nur für HNS. ICANN-Ausgabe nutzt delegiertes DNS.',
+      inlineIcann: 'SYNTH-Nameserver-Modus ist nur für HNS. ICANN-Ausgabe nutzt benannte DNS-Delegation.',
+      synthNsMissing: 'HNS-SYNTH-Modus benötigt mindestens eine Nameserver-IP-Adresse.',
       websiteIpv4: 'Website-IPv4-Adresse ist ungültig.',
       websiteIpv6: 'Website-IPv6-Adresse ist ungültig.',
       nsIpv4: 'Nameserver-IPv4-Adresse ist ungültig.',
@@ -403,17 +434,30 @@ const copy: Record<LanguageCode, CoreCopy> = {
       dsError: 'DS-Eintrag konnte nicht aus DNSKEY erzeugt werden.',
       dnskeyProtocol: 'DNSKEY-Protokoll ist normalerweise 3. Prüfen Sie, ob die DNSKEY-Zeile korrekt eingefügt wurde.',
       dnskeySep: 'Die DNSKEY hat kein SEP/KSK-Flag. DS-Einträge werden normalerweise aus der KSK erstellt.',
-      dnskeySha1: 'Diese DNSKEY nutzt einen alten RSA/SHA-1-Algorithmus. Nutzen Sie moderne DNSSEC-Algorithmen, wenn unterstützt.'
+      dnskeySha1: 'Dieser DNSKEY-Algorithmus wird für neue DNSSEC-Signaturen nicht empfohlen. Nutzen Sie einen aktuell unterstützten Algorithmus wie 8, 13 oder 15, wenn der Server ihn unterstützt.'
     },
     {},
     {
       serverPreset: 'Serverseitiger Startausschnitt. Zone erstellen, NS/A/AAAA/TLSA veröffentlichen, DNSSEC aktivieren, dann DS beim Parent veröffentlichen.',
       verifyDelegated: 'Befehle zum Prüfen, ob der autoritative Server vor und nach Parent-Delegation antwortet.',
+      inline4: 'HNS-Wallet-seitige synthetische IPv4-Nameserver-Referenz.',
+      inline6: 'HNS-Wallet-seitige synthetische IPv6-Nameserver-Referenz.',
+      verifyInline: 'Befehle zum Prüfen, ob der per SYNTH adressierte autoritative Server vor und nach dem HNS-Update antwortet.',
+      stepInline1: 'SYNTH verweist Resolver auf Nameserver-IPs; die Zone liefert weiter A/AAAA/TLSA.',
+      stepInline2: 'Der DNS-Server sollte Signaturschlüssel und signierte Zone verwalten.',
+      stepInline3: 'SYNTH ist die Parent-seitige Referenz; DS verbindet DNSSEC mit der signierten Zone.',
       integrator: 'Maschinenlesbare Ausgabe für Wallets, zukünftige APIs oder Integrationstests. Sie wird nicht automatisch gesendet.'
     },
     {
       quickSteps: {
-        inline: ['1. SYNTH4/SYNTH6 ins HNS-Wallet kopieren.', '2. Webserver auf dieser IP antworten lassen.', '3. Für DNSSEC/DANE in delegierten Modus wechseln.'],
+        inline: {
+          server: '1. Server-Einträge auf den autoritativen DNS-Server legen.',
+          dnssec: '2. DNSSEC-Signierung für die Zone aktivieren.',
+          dsReady: '3. SYNTH- und DS-Einträge ans HNS-Wallet senden.',
+          dsMissing: '3. DNSKEY hier einfügen, dann SYNTH- und DS-Einträge ans HNS-Wallet senden.',
+          tlsaReady: '4. Passendes HTTPS-Zertifikat/Schlüssel ausliefern.',
+          tlsaMissing: '4. Leaf-Zertifikat oder PUBLIC KEY einfügen, um TLSA zu erzeugen.'
+        },
         delegated: {
           server: '1. Server-Einträge auf den autoritativen DNS-Server legen.',
           dnssec: '2. DNSSEC-Signierung für die Zone aktivieren.',
@@ -443,7 +487,7 @@ const copy: Record<LanguageCode, CoreCopy> = {
         parentSplit: 'Parent- und Server-Einträge sind verschieden. Wallet oder Registrar delegiert. Der DNS-Server veröffentlicht Website-Einträge und TLSA.',
         idna: 'Internationalisierte Namen werden akzeptiert, aber DNS-Einträge nutzen IDNA-A-Labels wie xn--bcher-kva.example.',
         hnsGlue: (nameserver, domain) => `Im delegierten HNS-Modus ist GLUE4/GLUE6 nötig, wenn der Nameserver unter dem HNS-Namen selbst liegt, z. B. ${nameserver} für ${domain}/.`,
-        hnsInline: 'HNS-Inline ist die einfachste IP-Konfiguration. Für DNSSEC und DANE delegierten Modus nutzen.',
+        hnsInline: 'HNS-SYNTH speichert Nameserver-IPs in der HNS-Ressource. Website-A/AAAA und TLSA bleiben auf dem autoritativen DNS-Server.',
         preset: {
           'generic-zone': 'Generische Zonendatei-Ausgabe funktioniert mit BIND, Knot, NSD und vielen DNS-Importtools.',
           'hosted-dns': 'Hosted DNS ist der kürzeste Weg, wenn der Provider DNSSEC, DS-Export und TLSA unterstützt.',
@@ -460,7 +504,8 @@ const copy: Record<LanguageCode, CoreCopy> = {
       invalidDomain: 'O formato do domínio não é válido para saída DNS.',
       idna: 'Entrada de domínio internacionalizado é convertida para A-labels ASCII DNS como xn--... nos registros gerados.',
       ttl: 'TTL normalmente deve ficar entre 60 e 86400 segundos.',
-      inlineIcann: 'Modo SYNTH direto é somente HNS. Saída ICANN usa DNS delegado.',
+      inlineIcann: 'Modo nameserver SYNTH é somente HNS. Saída ICANN usa delegação DNS nomeada.',
+      synthNsMissing: 'Modo HNS SYNTH precisa de ao menos um endereço IP de nameserver.',
       websiteIpv4: 'O endereço IPv4 do site não é válido.',
       websiteIpv6: 'O endereço IPv6 do site não é válido.',
       nsIpv4: 'O endereço IPv4 do nameserver não é válido.',
@@ -475,17 +520,30 @@ const copy: Record<LanguageCode, CoreCopy> = {
       dsError: 'Não foi possível gerar o registro DS a partir da DNSKEY.',
       dnskeyProtocol: 'O protocolo DNSKEY normalmente é 3. Verifique se a linha DNSKEY foi colada corretamente.',
       dnskeySep: 'A DNSKEY não tem a flag SEP/KSK. Registros DS normalmente são feitos a partir da KSK.',
-      dnskeySha1: 'Esta DNSKEY usa algoritmo antigo da família RSA/SHA-1. Prefira algoritmos DNSSEC modernos quando o servidor suportar.'
+      dnskeySha1: 'Este algoritmo DNSKEY não é recomendado para novas assinaturas DNSSEC. Prefira um algoritmo suportado atualmente, como 8, 13 ou 15, quando o servidor suportar.'
     },
     {},
     {
       serverPreset: 'Trecho inicial do lado servidor. Crie a zona, publique NS/A/AAAA/TLSA, ative DNSSEC e depois publique DS no parent.',
       verifyDelegated: 'Comandos para verificar se o servidor autoritativo responde antes e depois da delegação parent.',
+      inline4: 'Referência sintética IPv4 de nameserver no lado da carteira HNS.',
+      inline6: 'Referência sintética IPv6 de nameserver no lado da carteira HNS.',
+      verifyInline: 'Comandos para verificar se o servidor autoritativo endereçado por SYNTH responde antes e depois da atualização HNS.',
+      stepInline1: 'SYNTH aponta resolvedores para IPs de nameserver; a zona ainda serve A/AAAA/TLSA.',
+      stepInline2: 'O servidor DNS deve gerenciar as chaves de assinatura e a zona assinada.',
+      stepInline3: 'SYNTH é a referência do lado parent; DS conecta DNSSEC à zona assinada.',
       integrator: 'Saída legível por máquina para carteiras, APIs futuras ou testes de integração. Não é enviada automaticamente.'
     },
     {
       quickSteps: {
-        inline: ['1. Copie SYNTH4/SYNTH6 para a carteira HNS.', '2. Faça o servidor web responder nesse IP.', '3. Troque para modo delegado para DNSSEC/DANE.'],
+        inline: {
+          server: '1. Coloque os registros no servidor DNS autoritativo.',
+          dnssec: '2. Ative a assinatura DNSSEC na zona.',
+          dsReady: '3. Envie os registros SYNTH e DS para a carteira HNS.',
+          dsMissing: '3. Cole a DNSKEY aqui e envie os registros SYNTH e DS para a carteira HNS.',
+          tlsaReady: '4. Sirva o certificado/chave HTTPS correspondente.',
+          tlsaMissing: '4. Cole o certificado folha ou PUBLIC KEY para gerar TLSA.'
+        },
         delegated: {
           server: '1. Coloque os registros no servidor DNS autoritativo.',
           dnssec: '2. Ative a assinatura DNSSEC na zona.',
@@ -515,7 +573,7 @@ const copy: Record<LanguageCode, CoreCopy> = {
         parentSplit: 'Registros parent e de servidor são diferentes. Carteira ou registrador delega. O servidor DNS publica registros do site e TLSA.',
         idna: 'Nomes internacionalizados são aceitos como entrada, mas registros DNS usam A-labels IDNA como xn--bcher-kva.example.',
         hnsGlue: (nameserver, domain) => `No modo HNS delegado, GLUE4/GLUE6 é necessário quando o nameserver fica sob o próprio nome HNS, como ${nameserver} para ${domain}/.`,
-        hnsInline: 'Modo HNS direto é a configuração IP mais simples. Use modo delegado para DNSSEC e DANE.',
+        hnsInline: 'Modo HNS SYNTH guarda IPs de nameserver no recurso HNS. Registros A/AAAA e TLSA do site continuam no servidor DNS autoritativo.',
         preset: {
           'generic-zone': 'Saída de zona genérica funciona com BIND, Knot, NSD e muitas ferramentas DNS.',
           'hosted-dns': 'DNS hospedado é o caminho mais curto se o provedor suporta DNSSEC, exportação DS e TLSA.',
@@ -532,7 +590,8 @@ const copy: Record<LanguageCode, CoreCopy> = {
       invalidDomain: 'DNS 出力に使えるドメイン形式ではありません。',
       idna: '国際化ドメイン入力は、生成レコード内で xn--... のような DNS ASCII A-label に変換されます。',
       ttl: 'TTL は通常 60 から 86400 秒の範囲にします。',
-      inlineIcann: 'SYNTH 直接モードは HNS 専用です。ICANN 出力は委任 DNS を使います。',
+      inlineIcann: 'SYNTH ネームサーバーモードは HNS 専用です。ICANN 出力は名前付き DNS 委任を使います。',
+      synthNsMissing: 'HNS SYNTH モードには少なくとも 1 つのネームサーバー IP アドレスが必要です。',
       websiteIpv4: 'Web サイト IPv4 アドレスが正しくありません。',
       websiteIpv6: 'Web サイト IPv6 アドレスが正しくありません。',
       nsIpv4: 'ネームサーバー IPv4 アドレスが正しくありません。',
@@ -547,17 +606,30 @@ const copy: Record<LanguageCode, CoreCopy> = {
       dsError: 'DNSKEY 入力から DS レコードを生成できませんでした。',
       dnskeyProtocol: 'DNSKEY protocol は通常 3 です。DNSKEY 行が正しく貼り付けられているか確認してください。',
       dnskeySep: 'この DNSKEY には SEP/KSK フラグがありません。DS レコードは通常 KSK から作ります。',
-      dnskeySha1: 'この DNSKEY は古い RSA/SHA-1 系アルゴリズムを使っています。可能なら新しい DNSSEC アルゴリズムを使ってください。'
+      dnskeySha1: 'この DNSKEY アルゴリズムは新しい DNSSEC 署名には推奨されません。サーバーが対応している場合は 8、13、15 など現在対応されているアルゴリズムを使ってください。'
     },
     {},
     {
       serverPreset: 'サーバー側の開始用スニペットです。ゾーンを作り、NS/A/AAAA/TLSA を公開し、DNSSEC 署名を有効にしてから親側に DS を公開します。',
       verifyDelegated: '親側委任の前後で権威サーバーが応答するか確認するコマンドです。',
+      inline4: 'HNS ウォレット側の合成 IPv4 ネームサーバー参照です。',
+      inline6: 'HNS ウォレット側の合成 IPv6 ネームサーバー参照です。',
+      verifyInline: 'SYNTH で指定された権威サーバーが HNS 更新の前後に応答するか確認するコマンドです。',
+      stepInline1: 'SYNTH はリゾルバをネームサーバー IP へ向けます。ゾーンは引き続き A/AAAA/TLSA を配信します。',
+      stepInline2: 'DNS サーバーが署名鍵と署名済みゾーンを管理します。',
+      stepInline3: 'SYNTH は親側の参照で、DS が DNSSEC を署名済みゾーンへ接続します。',
       integrator: 'ウォレット、将来の API、統合テスト向けの機械可読出力です。自動送信はされません。'
     },
     {
       quickSteps: {
-        inline: ['1. SYNTH4/SYNTH6 を HNS ウォレットにコピーします。', '2. その IP で Web サーバーが応答するようにします。', '3. DNSSEC/DANE が必要なら委任モードに切り替えます。'],
+        inline: {
+          server: '1. サーバーレコードを権威 DNS サーバーに入れます。',
+          dnssec: '2. ゾーンで DNSSEC 署名を有効にします。',
+          dsReady: '3. SYNTH と DS レコードを HNS ウォレットへ送信します。',
+          dsMissing: '3. ここに DNSKEY を貼り、SYNTH と DS レコードを HNS ウォレットへ送信します。',
+          tlsaReady: '4. 一致する HTTPS 証明書/鍵を配信します。',
+          tlsaMissing: '4. リーフ証明書または PUBLIC KEY を貼って TLSA を生成します。'
+        },
         delegated: {
           server: '1. サーバーレコードを権威 DNS サーバーに入れます。',
           dnssec: '2. ゾーンで DNSSEC 署名を有効にします。',
@@ -587,7 +659,7 @@ const copy: Record<LanguageCode, CoreCopy> = {
         parentSplit: '親側レコードとサーバーレコードは別です。ウォレットまたはレジストラが委任し、DNS サーバーがサイトレコードと TLSA を公開します。',
         idna: '国際化名は入力できますが、DNS レコードでは xn--bcher-kva.example のような IDNA A-label を使います。',
         hnsGlue: (nameserver, domain) => `HNS 委任モードでは、${domain}/ に対する ${nameserver} のようにネームサーバーが HNS 名の下にある場合、GLUE4/GLUE6 が必要です。`,
-        hnsInline: 'HNS 直接モードは最も簡単な IP 指定です。DNSSEC と DANE が必要なら委任モードを使います。',
+        hnsInline: 'HNS SYNTH モードは HNS リソースにネームサーバー IP を保存します。Web サイトの A/AAAA と TLSA レコードは権威 DNS サーバー側に置きます。',
         preset: {
           'generic-zone': '汎用ゾーンファイル出力は BIND、Knot、NSD、多くの DNS インポートツールで使えます。',
           'hosted-dns': 'プロバイダーが DNSSEC、DS エクスポート、TLSA をサポートするならホスト型 DNS が最短です。',
@@ -616,14 +688,12 @@ function nameserverForHelp(result: BootstrapResult): string {
 
 function localizeQuickSteps(result: BootstrapResult, input: BootstrapInput, c: CoreCopy): GeneratedLine[] {
   if (result.diagnostics.mode === 'hns-inline') {
-    return c.quickSteps.inline.map((value, index) => ({
-      value,
-      explanation: [
-        translatedExplanation(c, explanationsEn.stepInline1),
-        translatedExplanation(c, explanationsEn.stepInline2),
-        translatedExplanation(c, explanationsEn.stepInline3)
-      ][index]
-    }));
+    return [
+      { value: c.quickSteps.inline.server, explanation: translatedExplanation(c, explanationsEn.stepInline1) },
+      { value: c.quickSteps.inline.dnssec, explanation: translatedExplanation(c, explanationsEn.stepInline2) },
+      { value: result.diagnostics.hasDs ? c.quickSteps.inline.dsReady : c.quickSteps.inline.dsMissing, explanation: translatedExplanation(c, explanationsEn.stepInline3) },
+      { value: result.diagnostics.hasTlsa ? c.quickSteps.inline.tlsaReady : c.quickSteps.inline.tlsaMissing, explanation: translatedExplanation(c, explanationsEn.stepTlsa) }
+    ];
   }
 
   return [
@@ -642,7 +712,9 @@ function localizeVerification(lines: GeneratedLine[], c: CoreCopy): GeneratedLin
       const expected = value.match(/# Expected address: (.+)$/m)?.[1] ?? '<website-ip>';
       value = `${c.verify.hnsInline}\n${c.verify.expectedAddress}: ${expected}`;
     } else {
-      value = value.replace('# For HNS full-chain tests, query through your HNS-aware resolver after the wallet update confirms.', c.verify.hnsFullChain);
+      value = value
+        .replace('# After the HNS update confirms, test full-chain resolution with an HNS-aware resolver/browser.', c.verify.hnsInline)
+        .replace('# For HNS full-chain tests, query through your HNS-aware resolver after the wallet update confirms.', c.verify.hnsFullChain);
     }
     return { value, explanation: translatedExplanation(c, line.explanation) };
   });
@@ -680,7 +752,7 @@ function localizeHelpTips(result: BootstrapResult, input: BootstrapInput, c: Cor
     c.helpTips.parentSplit,
     c.helpTips.idna
   ];
-  if (input.domainType === 'hns') tips.push(c.helpTips.hnsGlue(nameserverForHelp(result), rootless(result.normalizedDomain)));
+  if (input.domainType === 'hns' && result.diagnostics.mode === 'delegated') tips.push(c.helpTips.hnsGlue(nameserverForHelp(result), rootless(result.normalizedDomain)));
   if (result.diagnostics.mode === 'hns-inline') tips.push(c.helpTips.hnsInline);
   return tips;
 }

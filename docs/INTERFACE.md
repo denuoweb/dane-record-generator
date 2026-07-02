@@ -33,12 +33,12 @@ The selected language localizes the app shell and persists in local browser stor
 Fields:
 
 - Domain type: HNS or ICANN
-- Setup mode: delegated DNS or HNS inline IP
+- Setup mode: delegated authoritative DNS or HNS SYNTH nameserver
 - Domain input: placeholder starts as `example/` for HNS or `example.com` for ICANN; the field is blank until filled.
 
 Help copy:
 
-> Use delegated mode for DNSSEC + DANE. Inline mode is HNS-only IP pointing.
+> Named mode uses a nameserver hostname. SYNTH mode stores nameserver IPs in HNS. Both modes still use authoritative DNS for website and TLSA records.
 
 Internationalized input:
 
@@ -67,6 +67,17 @@ Preset choices:
 - Knot DNS
 - BIND 9
 - NSD
+
+## Compatibility Matrix
+
+| Domain type | Setup mode | Parent-side output | Authoritative DNS output | DNSSEC + DANE support |
+| --- | --- | --- | --- | --- |
+| HNS | Delegated authoritative DNS | `NS` or `GLUE4`/`GLUE6`, plus `DS` | `NS`, `A`/`AAAA`, `TLSA`, signed zone | Yes |
+| HNS | SYNTH nameserver | `SYNTH4`/`SYNTH6`, plus `DS` | Synthetic `NS`, `A`/`AAAA`, `TLSA`, signed zone | Yes |
+| ICANN | Delegated authoritative DNS | Registrar nameserver/glue, plus `DS` | `NS`, `A`/`AAAA`, `TLSA`, signed zone | Yes |
+| ICANN | SYNTH nameserver | Not applicable | Falls back to delegated authoritative DNS | Not an ICANN mode |
+
+`SYNTH4` and `SYNTH6` are not website address records. They encode authoritative nameserver IPs and produce synthetic `_..._synth.` nameserver names.
 
 ### 3. DANE
 

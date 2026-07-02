@@ -5,6 +5,7 @@ export interface ServerPresetInput {
   preset: DnsServerPreset;
   domain: string;
   nameserverHost: string;
+  nameserverHosts?: string[];
   ttl: number;
   websiteIpv4?: string;
   websiteIpv6?: string;
@@ -24,6 +25,7 @@ function makeZoneFile(input: ServerPresetInput): string {
   const zone = input.domain;
   const zoneNoRoot = zoneNameWithoutRoot(zone);
   const serial = new Date().toISOString().slice(0, 10).replace(/-/g, '') + '01';
+  const nameservers = input.nameserverHosts?.length ? input.nameserverHosts : [input.nameserverHost];
   const lines = [
     `$ORIGIN ${zone}`,
     `$TTL ${input.ttl}`,
@@ -34,7 +36,7 @@ function makeZoneFile(input: ServerPresetInput): string {
     '  1209600    ; expire',
     `  ${input.ttl}       ; minimum`,
     ')',
-    `@ ${input.ttl} IN NS ${input.nameserverHost}`,
+    ...nameservers.map((nameserver) => `@ ${input.ttl} IN NS ${nameserver}`),
     ...(input.websiteIpv4 ? [`@ ${input.ttl} IN A ${input.websiteIpv4}`] : []),
     ...(input.websiteIpv6 ? [`@ ${input.ttl} IN AAAA ${input.websiteIpv6}`] : []),
     `${tlsaOwnerRelative(input)} ${input.ttl} IN TLSA ${tlsaRdata(input)}`,
@@ -46,11 +48,12 @@ function makeZoneFile(input: ServerPresetInput): string {
 }
 
 function hostedDnsPreset(input: ServerPresetInput): string {
+  const nameservers = input.nameserverHosts?.length ? input.nameserverHosts : [input.nameserverHost];
   return [
     '# Hosted DNS provider panel',
     '# Create or edit the authoritative zone, then add these records.',
     `Zone: ${zoneNameWithoutRoot(input.domain)}`,
-    `NS    @                 ${input.nameserverHost}`,
+    ...nameservers.map((nameserver) => `NS    @                 ${nameserver}`),
     ...(input.websiteIpv4 ? [`A     @                 ${input.websiteIpv4}`] : []),
     ...(input.websiteIpv6 ? [`AAAA  @                 ${input.websiteIpv6}`] : []),
     `TLSA  ${tlsaOwnerRelative(input).padEnd(17)} ${tlsaRdata(input)}`,
@@ -114,10 +117,11 @@ function nsdPreset(input: ServerPresetInput): string {
 
 function powerDnsPreset(input: ServerPresetInput): string {
   const zoneNoRoot = zoneNameWithoutRoot(input.domain);
+  const nameservers = input.nameserverHosts?.length ? input.nameserverHosts : [input.nameserverHost];
   return [
     '# PowerDNS Authoritative records',
     `Zone: ${zoneNoRoot}`,
-    `NS   @                 ${input.nameserverHost}`,
+    ...nameservers.map((nameserver) => `NS   @                 ${nameserver}`),
     ...(input.websiteIpv4 ? [`A    @                 ${input.websiteIpv4}`] : []),
     ...(input.websiteIpv6 ? [`AAAA @                 ${input.websiteIpv6}`] : []),
     `TLSA ${tlsaOwnerRelative(input).padEnd(17)} ${tlsaRdata(input)}`,
@@ -156,7 +160,7 @@ export function generateServerPreset(input: ServerPresetInput): GeneratedLine[] 
 }
 
 export function recommendedPresetTip(preset: BootstrapInput['dnsServerPreset']): string {
-  if (preset === 'hosted-dns') return 'Hosted DNS is the shortest path if your provider supports DNSSEC, custom DS export, and TLSA records.';
+  if (preset === 'hosted-dns') return 'Hosted DNS is the shortest path if your provider supports DNSSEC, DS or DNSKEY export, and TLSA records.';
   if (preset === 'powerdns') return 'PowerDNS is a short path when you want an admin API or database-backed DNS.';
   if (preset === 'knot') return 'Knot DNS is a clean modern authoritative server with simple DNSSEC automation.';
   if (preset === 'bind') return 'BIND 9 is widely documented and package-manager friendly, but its config is more verbose.';
