@@ -27,13 +27,13 @@ Full DNSSEC + DANE path for a Handshake name:
 
 ```zone
 # HNS wallet / name resource
-GLUE4 ns1.example. 203.0.113.10
+GLUE4 ns1.dane. 203.0.113.10
 DS 12345 13 2 7A1B...F09C
 
 # Authoritative DNS server
-example. 3600 IN NS ns1.example.
-example. 3600 IN A 203.0.113.20
-_443._tcp.example. 3600 IN TLSA 3 1 1 9B2C...A811
+dane. 3600 IN NS ns1.dane.
+dane. 3600 IN A 203.0.113.20
+_443._tcp.dane. 3600 IN TLSA 3 1 1 9B2C...A811
 ```
 
 ### HNS SYNTH nameserver mode
@@ -46,9 +46,9 @@ SYNTH4 203.0.113.10
 DS 12345 13 2 7A1B...F09C
 
 # Authoritative DNS server
-example. 3600 IN NS _pc0722g._synth.
-example. 3600 IN A 203.0.113.20
-_443._tcp.example. 3600 IN TLSA 3 1 1 9B2C...A811
+dane. 3600 IN NS _pc0722g._synth.
+dane. 3600 IN A 203.0.113.20
+_443._tcp.dane. 3600 IN TLSA 3 1 1 9B2C...A811
 ```
 
 ### ICANN delegated DNSSEC mode
@@ -230,8 +230,8 @@ import { generateBootstrap } from './core/bootstrap';
 const result = await generateBootstrap({
   domainType: 'hns',
   setupMode: 'delegated',
-  domainInput: 'example/',
-  nameserverHost: 'ns1.example.',
+  domainInput: 'dane/',
+  nameserverHost: 'ns1.dane.',
   nameserverIpv4: '203.0.113.10',
   websiteIpv4: '203.0.113.20',
   port: 443,

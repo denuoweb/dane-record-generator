@@ -9,10 +9,10 @@ This tool answers two questions:
 
 Use **Delegated authoritative DNS**.
 
-For an HNS name such as `example/`:
+For an HNS name such as `dane/`:
 
 1. Run an authoritative DNS server.
-2. Use a nameserver name such as `ns1.example.`.
+2. Use a nameserver name such as `ns1.dane.`.
 3. Put that nameserver IP in the HNS wallet as `GLUE4` or `GLUE6`.
 4. Put the web server IP and TLSA record in the DNS zone.
 5. Enable DNSSEC signing.
@@ -38,7 +38,7 @@ Parent-side records only tell resolvers where authority starts.
 HNS parent examples:
 
 ```zone
-GLUE4 ns1.example. 203.0.113.10
+GLUE4 ns1.dane. 203.0.113.10
 DS 12345 13 2 7A1B...F09C
 ```
 
@@ -55,9 +55,9 @@ DS: 12345 13 2 7A1B...F09C
 The authoritative DNS server publishes the website and DANE records:
 
 ```zone
-example. 3600 IN NS ns1.example.
-example. 3600 IN A 203.0.113.20
-_443._tcp.example. 3600 IN TLSA 3 1 1 <spki-sha256>
+dane. 3600 IN NS ns1.dane.
+dane. 3600 IN A 203.0.113.20
+_443._tcp.dane. 3600 IN TLSA 3 1 1 <spki-sha256>
 ```
 
 ## Running your own authoritative nameserver
@@ -194,7 +194,7 @@ The standards tracked by this project are in [Internationalization standards](I1
 
 ### Do I need glue?
 
-Glue is needed when the nameserver is inside the same zone. For `example/` using `ns1.example.`, publish `GLUE4` or `GLUE6` in the HNS wallet. If the nameserver is external, such as a provider nameserver, publish `NS` instead.
+Glue is needed when the nameserver is inside the same zone. For `dane/` using `ns1.dane.`, publish `GLUE4` or `GLUE6` in the HNS wallet. If the nameserver is external, such as a provider nameserver, publish `NS` instead.
 
 ### Is SYNTH the website IP?
 

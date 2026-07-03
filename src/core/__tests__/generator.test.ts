@@ -13,12 +13,22 @@ MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE7Z2aT5FJk4M3UgR6pW/8T4zQIErB
 
 describe('domain normalization', () => {
   it('normalizes HNS slash notation', () => {
-    expect(normalizeDomain('example/', 'hns')).toBe('example.');
+    expect(normalizeDomain('dane/', 'hns')).toBe('dane.');
   });
 
-  it('keeps numeric HNS roots as labels instead of IPv4 hosts', () => {
-    expect(normalizeDomain('192', 'hns')).toBe('192.');
+  it('keeps numeric HNS slash roots as labels instead of IPv4 hosts', () => {
     expect(normalizeDomain('192/', 'hns')).toBe('192.');
+  });
+
+  it('rejects HNS names that hsd would reject', () => {
+    expect(() => normalizeDomain('dane', 'hns')).toThrow('end with /');
+    expect(() => normalizeDomain('Dane/', 'hns')).toThrow('lowercase');
+    expect(() => normalizeDomain('da/ne/', 'hns')).toThrow('cannot contain /');
+    expect(() => normalizeDomain('www.dane/', 'hns')).toThrow('without dots');
+    expect(() => normalizeDomain('bücher/', 'hns')).toThrow('ASCII');
+    expect(() => normalizeDomain('-dane/', 'hns')).toThrow('cannot begin or end');
+    expect(() => normalizeDomain('dane!/', 'hns')).toThrow('may only contain');
+    expect(() => normalizeDomain('example/', 'hns')).toThrow('reserved');
   });
 
   it('normalizes ICANN domains', () => {
@@ -31,12 +41,12 @@ describe('domain normalization', () => {
   });
 
   it('detects in-bailiwick nameservers', () => {
-    expect(isInBailiwick('ns1.example.', 'example.')).toBe(true);
-    expect(isInBailiwick('ns1.provider.net.', 'example.')).toBe(false);
+    expect(isInBailiwick('ns1.dane.', 'dane.')).toBe(true);
+    expect(isInBailiwick('ns1.provider.net.', 'dane.')).toBe(false);
   });
 
   it('builds TLSA owner names', () => {
-    expect(tlsaOwnerName('example.', 443, 'tcp')).toBe('_443._tcp.example.');
+    expect(tlsaOwnerName('dane.', 443, 'tcp')).toBe('_443._tcp.dane.');
   });
 
   it('rejects malformed IPv6', () => {
@@ -53,8 +63,8 @@ describe('domain normalization', () => {
     const result = await generateBootstrap({
       domainType: 'hns',
       setupMode: 'delegated',
-      domainInput: 'example/',
-      nameserverHost: 'ns1.example.',
+      domainInput: 'dane/',
+      nameserverHost: 'ns1.dane.',
       nameserverIpv4: '203.0.113.10',
       websiteIpv4: '203.0.113.20',
       port: 443,
@@ -62,7 +72,7 @@ describe('domain normalization', () => {
       pemInput: PUBLIC_KEY
     });
 
-    expect(result.verificationCommands[0]!.value).toContain('dig @203.0.113.10 example. SOA');
+    expect(result.verificationCommands[0]!.value).toContain('dig @203.0.113.10 dane. SOA');
     expect(result.verificationCommands[0]!.value).toContain('Direct authoritative queries above prove the server answers');
     expect(result.verificationCommands[0]!.value).toContain('<hns-validating-recursive-resolver>');
     expect(result.integrationRecords[0]!.value).toContain('hns-parent-record-draft');
@@ -82,10 +92,10 @@ describe('domain normalization', () => {
 
 describe('URL prefill', () => {
   it('prefills a plain HNS name and TLSA intent', () => {
-    const prefill = readUrlPrefillFromSearch('?domain=example&intent=generate_tlsa');
+    const prefill = readUrlPrefillFromSearch('?domain=dane&intent=generate_tlsa');
 
     expect(prefill.hasPrefill).toBe(true);
-    expect(prefill.domainInput).toBe('example/');
+    expect(prefill.domainInput).toBe('dane/');
     expect(prefill.domainType).toBe('hns');
     expect(prefill.setupMode).toBe('delegated');
     expect(prefill.intent).toBe('generate_tlsa');
@@ -100,7 +110,7 @@ describe('URL prefill', () => {
   });
 
   it('prefills SYNTH nameserver mode with nameserver and website addresses', () => {
-    const prefill = readUrlPrefillFromSearch('?domain=example&mode=synth&ns4=203.0.113.10&a=203.0.113.20&port=8443');
+    const prefill = readUrlPrefillFromSearch('?domain=dane&mode=synth&ns4=203.0.113.10&a=203.0.113.20&port=8443');
 
     expect(prefill.domainType).toBe('hns');
     expect(prefill.setupMode).toBe('hns-inline');
@@ -182,8 +192,8 @@ describe('bootstrap generator', () => {
     const result = await generateBootstrap({
       domainType: 'hns',
       setupMode: 'delegated',
-      domainInput: 'example/',
-      nameserverHost: 'ns1.example.',
+      domainInput: 'dane/',
+      nameserverHost: 'ns1.dane.',
       nameserverIpv4: '203.0.113.10',
       websiteIpv4: '203.0.113.20',
       port: 443,
@@ -191,25 +201,25 @@ describe('bootstrap generator', () => {
       pemInput: PUBLIC_KEY
     });
 
-    expect(result.parentRecords.some((line) => line.value.startsWith('GLUE4 ns1.example.'))).toBe(true);
+    expect(result.parentRecords.some((line) => line.value.startsWith('GLUE4 ns1.dane.'))).toBe(true);
     const walletCommand = result.parentRecords.find((line) => line.value.includes('hsw-cli rpc sendupdate'));
     expect(walletCommand?.presentation?.tabId).toBe('cli');
     expect(walletCommand?.presentation?.defaultSelected).toBe(true);
-    expect(walletCommand?.value).toContain(`hsw-cli rpc sendupdate 'example' '{"records":[{"type":"GLUE4","ns":"ns1.example.","address":"203.0.113.10"}]}'`);
-    expect(walletCommand?.value).toContain(`hsd-cli rpc getnameresource 'example'`);
+    expect(walletCommand?.value).toContain(`hsw-cli rpc sendupdate 'dane' '{"records":[{"type":"GLUE4","ns":"ns1.dane.","address":"203.0.113.10"}]}'`);
+    expect(walletCommand?.value).toContain(`hsd-cli rpc getnameresource 'dane'`);
     const bobOption = result.parentRecords.find((line) => line.presentation?.tabId === 'bob');
     expect(bobOption?.value).toContain('Bob Wallet desktop UI');
-    expect(bobOption?.value).toContain('GLUE4: ns=ns1.example. address=203.0.113.10');
+    expect(bobOption?.value).toContain('GLUE4: ns=ns1.dane. address=203.0.113.10');
     const shakeOption = result.parentRecords.find((line) => line.presentation?.tabId === 'shake');
     expect(shakeOption?.value).toContain('Shake Wallet / LearnHNS browser wallet UI');
-    expect(shakeOption?.value).toContain('const tx = await wallet.sendUpdate("example", [');
+    expect(shakeOption?.value).toContain('const tx = await wallet.sendUpdate("dane", [');
     expect(shakeOption?.value).toContain('"type": "GLUE4"');
     expect(result.authoritativeRecords.some((line) => line.value.includes(' IN A 203.0.113.20'))).toBe(true);
     expect(result.authoritativeRecords.some((line) => line.value.includes(' IN TLSA 3 1 1 '))).toBe(true);
     const zoneFileOption = result.authoritativeRecords.find((line) => line.presentation?.tabId === 'generic-zone');
     expect(zoneFileOption?.presentation?.tabLabel).toBe('Zone file');
     expect(zoneFileOption?.presentation?.defaultSelected).toBe(true);
-    expect(zoneFileOption?.value).toContain('$ORIGIN example.');
+    expect(zoneFileOption?.value).toContain('$ORIGIN dane.');
     expect(result.authoritativeRecords.find((line) => line.presentation?.tabId === 'hosted-dns')?.value).toContain('Hosted DNS provider panel');
     expect(result.webServerNotes.some((line) => line.value.includes('current and next TLSA'))).toBe(true);
     expect(result.webServerNotes.some((line) => line.value.includes('ordinary HTTPS clients may ignore'))).toBe(true);
@@ -220,7 +230,7 @@ describe('bootstrap generator', () => {
     const result = await generateBootstrap({
       domainType: 'hns',
       setupMode: 'hns-inline',
-      domainInput: 'example/',
+      domainInput: 'dane/',
       nameserverIpv4: '203.0.113.10',
       websiteIpv4: '203.0.113.20',
       port: 443,
@@ -230,8 +240,8 @@ describe('bootstrap generator', () => {
 
     expect(result.parentRecords.map((line) => line.value)).toContain('SYNTH4 203.0.113.10');
     expect(result.parentRecords.find((line) => line.value.includes('hsw-cli rpc sendupdate'))?.value).toContain(`{"records":[{"type":"SYNTH4","address":"203.0.113.10"}]}`);
-    expect(result.authoritativeRecords.some((line) => line.value === 'example. 3600 IN NS _pc0722g._synth.')).toBe(true);
-    expect(result.authoritativeRecords.some((line) => line.value === 'example. 3600 IN A 203.0.113.20')).toBe(true);
+    expect(result.authoritativeRecords.some((line) => line.value === 'dane. 3600 IN NS _pc0722g._synth.')).toBe(true);
+    expect(result.authoritativeRecords.some((line) => line.value === 'dane. 3600 IN A 203.0.113.20')).toBe(true);
     expect(result.authoritativeRecords.some((line) => line.value.includes(' IN TLSA 3 1 1 '))).toBe(true);
     expect(result.serverPresetRecords.length).toBeGreaterThan(0);
     expect(result.statusChecks.find((item) => item.label === 'Nameserver')?.status).toBe('ok');
@@ -260,8 +270,8 @@ describe('bootstrap generator', () => {
     const result = await generateBootstrap({
       domainType: 'hns',
       setupMode: 'delegated',
-      domainInput: 'example/',
-      nameserverHost: 'ns1.example.',
+      domainInput: 'dane/',
+      nameserverHost: 'ns1.dane.',
       nameserverIpv4: '203.0.113.10',
       websiteIpv4: '203.0.113.20',
       port: 443,
@@ -275,7 +285,7 @@ describe('bootstrap generator', () => {
     const bindOption = result.authoritativeRecords.find((line) => line.presentation?.tabId === 'bind');
     expect(bindOption?.presentation?.defaultSelected).toBe(true);
     expect(bindOption?.value).toContain('named.conf.local');
-    expect(result.serverPresetRecords[0]!.value).toContain('$ORIGIN example.');
+    expect(result.serverPresetRecords[0]!.value).toContain('$ORIGIN dane.');
     expect(result.serverPresetRecords[0]!.value).toContain('Disable recursion');
     expect(result.serverPresetRecords[0]!.value).toContain('UDP/53 and TCP/53');
     expect(result.sections.some((section) => section.id === 'server')).toBe(false);
@@ -304,8 +314,8 @@ describe('bootstrap generator', () => {
     const result = await generateBootstrap({
       domainType: 'hns',
       setupMode: 'delegated',
-      domainInput: 'example/',
-      nameserverHost: 'ns1.example.',
+      domainInput: 'dane/',
+      nameserverHost: 'ns1.dane.',
       nameserverIpv4: '203.0.113.10',
       websiteIpv4: '203.0.113.20',
       port: 443,
@@ -320,7 +330,7 @@ describe('bootstrap generator', () => {
     const result = await generateBootstrap({
       domainType: 'hns',
       setupMode: 'delegated',
-      domainInput: 'example/',
+      domainInput: 'dane/',
       port: 443,
       protocol: 'tcp'
     });
@@ -343,8 +353,8 @@ describe('bootstrap generator', () => {
     const missingWebsiteIp = await generateBootstrap({
       domainType: 'hns',
       setupMode: 'delegated',
-      domainInput: 'example/',
-      nameserverHost: 'ns1.example.',
+      domainInput: 'dane/',
+      nameserverHost: 'ns1.dane.',
       nameserverIpv4: '203.0.113.10',
       port: 443,
       protocol: 'tcp'
@@ -356,8 +366,8 @@ describe('bootstrap generator', () => {
     const withWebsiteIp = await generateBootstrap({
       domainType: 'hns',
       setupMode: 'delegated',
-      domainInput: 'example/',
-      nameserverHost: 'ns1.example.',
+      domainInput: 'dane/',
+      nameserverHost: 'ns1.dane.',
       nameserverIpv4: '203.0.113.10',
       websiteIpv4: '203.0.113.20',
       port: 443,

@@ -2,6 +2,7 @@ import type { DomainType, TransportProtocol } from './types';
 
 const HOST_LABEL_RE = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
 const BASE32HEX = '0123456789abcdefghijklmnopqrstuv';
+const HNS_BLACKLIST = new Set(['example', 'invalid', 'local', 'localhost', 'test']);
 
 function stripProtocolAndPath(input: string): string {
   return input
@@ -22,25 +23,32 @@ function toAsciiHostname(input: string): string {
   }
 }
 
-function toAsciiSingleLabel(input: string): string {
-  try {
-    const suffix = '.hns-idna.invalid';
-    const hostname = new URL(`http://${input}${suffix}/`).hostname;
-    return hostname.endsWith(suffix) ? hostname.slice(0, -suffix.length) : input;
-  } catch {
-    return input;
-  }
+function hnsNameInput(input: string): string {
+  const trimmed = input.trim();
+  if (!trimmed) throw new Error('Domain is required.');
+  if (!trimmed.endsWith('/')) throw new Error('HNS names must end with /, for example dane/.');
+
+  const name = trimmed.slice(0, -1);
+  if (!name) throw new Error('HNS name is required before the trailing /.');
+  if (name.includes('/')) throw new Error('HNS names cannot contain / except as the final marker.');
+  if (name.includes('.')) throw new Error('HNS names must be a single root name without dots.');
+  if (name.length > 63) throw new Error('HNS names can be at most 63 characters.');
+  if (/[^\x00-\x7F]/.test(name)) throw new Error('HNS names must use ASCII only.');
+  if (/[A-Z]/.test(name)) throw new Error('HNS names must be lowercase.');
+  if (!/^[a-z0-9_-]+$/.test(name)) throw new Error('HNS names may only contain lowercase letters, digits, hyphen, and underscore.');
+  if (/^[-_]/.test(name) || /[-_]$/.test(name)) throw new Error('HNS names cannot begin or end with hyphen or underscore.');
+  if (HNS_BLACKLIST.has(name)) throw new Error('This HNS name is reserved by hsd and cannot be used.');
+
+  return name;
 }
 
 export function normalizeDomain(input: string, domainType: DomainType): string {
-  let domain = stripProtocolAndPath(input);
-  if (!domain) throw new Error('Domain is required.');
-
   if (domainType === 'hns') {
-    domain = domain.replace(/\/$/, '');
-    if (!domain.includes('.') && !domain.endsWith('.')) return `${toAsciiSingleLabel(domain)}.`;
+    return `${hnsNameInput(input)}.`;
   }
 
+  let domain = stripProtocolAndPath(input);
+  if (!domain) throw new Error('Domain is required.');
   domain = toAsciiHostname(domain);
   return domain.endsWith('.') ? domain : `${domain}.`;
 }

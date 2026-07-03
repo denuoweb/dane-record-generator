@@ -34,7 +34,7 @@ Fields:
 
 - Domain type: HNS or ICANN
 - Setup mode: delegated authoritative DNS or HNS SYNTH nameserver
-- Domain input: placeholder starts as `example/` for HNS or `example.com` for ICANN; the field is blank until filled.
+- Domain input: placeholder starts as `dane/` for HNS or `example.com` for ICANN; the field is blank until filled.
 
 Help copy:
 
@@ -57,7 +57,7 @@ Fields:
 
 Help copy for HNS delegated mode:
 
-> If your nameserver is inside the same HNS name, such as `ns1.example.` for `example/`, your HNS wallet needs GLUE4 or GLUE6 so resolvers can find that nameserver.
+> If your nameserver is inside the same HNS name, such as `ns1.dane.` for `dane/`, your HNS wallet needs GLUE4 or GLUE6 so resolvers can find that nameserver.
 
 Preset choices:
 

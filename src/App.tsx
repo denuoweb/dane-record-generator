@@ -6,9 +6,9 @@ import { isLanguageCode, languageOptions, localeText, type LanguageCode, type Lo
 import { localizeBootstrapResult } from './resultLocalization';
 import { readUrlPrefill } from './urlPrefill';
 
-const HNS_EXAMPLE_DOMAIN = 'example/';
+const HNS_EXAMPLE_DOMAIN = 'dane/';
 const ICANN_EXAMPLE_DOMAIN = 'example.com';
-const HNS_EXAMPLE_NAMESERVER = 'ns1.example.';
+const HNS_EXAMPLE_NAMESERVER = 'ns1.dane.';
 const ICANN_EXAMPLE_NAMESERVER = 'ns1.example.com.';
 const EXAMPLE_NAMESERVER_IPV4 = '203.0.113.10';
 const EXAMPLE_WEBSITE_IPV4 = '203.0.113.20';
@@ -493,8 +493,17 @@ function App() {
               <option value="hns-inline" disabled={domainType !== 'hns'}>{t.options.hnsInline}</option>
             </select>
           </Field>
-          <Field label={t.fields.domain} help={t.fields.domainHelp}>
-            <input value={domainInput} onChange={(event) => setDomainInput(event.target.value)} placeholder={domainPlaceholder} autoComplete="off" />
+          <Field label={t.fields.domain} help={domainType === 'hns' ? t.fields.hnsDomainHelp : t.fields.domainHelp}>
+            <input
+              value={domainInput}
+              onChange={(event) => setDomainInput(event.target.value)}
+              placeholder={domainPlaceholder}
+              autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              pattern={domainType === 'hns' ? '[a-z0-9](?:[a-z0-9_-]{0,61}[a-z0-9])?/' : undefined}
+              title={domainType === 'hns' ? t.fields.hnsDomainHelp : undefined}
+            />
           </Field>
         </div>
 

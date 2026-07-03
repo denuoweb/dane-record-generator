@@ -393,7 +393,7 @@ export async function generateBootstrap(input: BootstrapInput): Promise<Bootstra
   let dsRecordText: string | undefined;
   let dsRecord: DsRecord | undefined;
   let inBailiwickNameserver = false;
-  let ns = 'ns1.example.';
+  let ns = 'ns1.dane.';
   let authoritativeNsHosts: string[] = [];
 
   if (nonEmpty(input.pemInput)) {
