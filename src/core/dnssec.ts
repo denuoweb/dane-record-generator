@@ -50,7 +50,9 @@ export function parseDnskey(input: string): ParsedDnskey {
 export function dnskeyKeyTag(rdata: Uint8Array): number {
   let ac = 0;
   for (let i = 0; i < rdata.length; i += 1) {
-    ac += i & 1 ? rdata[i] : rdata[i] << 8;
+    const byte = rdata[i];
+    if (byte === undefined) throw new Error('DNSKEY RDATA byte read failed.');
+    ac += i & 1 ? byte : byte << 8;
   }
   ac += (ac >> 16) & 0xffff;
   return ac & 0xffff;

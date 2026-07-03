@@ -17,7 +17,9 @@ function readLength(bytes: Uint8Array, offset: number): { length: number; next: 
 
   let length = 0;
   for (let i = 0; i < octets; i += 1) {
-    length = (length << 8) | bytes[offset + 1 + i];
+    const byte = bytes[offset + 1 + i];
+    if (byte === undefined) throw new Error('Unexpected end of DER length.');
+    length = (length << 8) | byte;
   }
   return { length, next: offset + 1 + octets };
 }
@@ -52,7 +54,7 @@ export function extractSpkiFromCertificateDer(certDer: Uint8Array): Uint8Array {
   }
 
   const tbsCertificate = root.children[0];
-  if (tbsCertificate.tag !== 0x30) {
+  if (!tbsCertificate || tbsCertificate.tag !== 0x30) {
     throw new Error('Certificate TBSCertificate sequence was not found.');
   }
 

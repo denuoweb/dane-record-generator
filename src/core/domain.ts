@@ -121,7 +121,9 @@ function ipv6Bytes(value: string): Uint8Array | null {
   if (groups.length !== 8) return null;
   const bytes = new Uint8Array(16);
   for (let index = 0; index < groups.length; index += 1) {
-    const group = Number.parseInt(groups[index], 16);
+    const groupText = groups[index];
+    if (groupText === undefined) return null;
+    const group = Number.parseInt(groupText, 16);
     if (!Number.isInteger(group) || group < 0 || group > 0xffff) return null;
     bytes[index * 2] = (group >> 8) & 0xff;
     bytes[index * 2 + 1] = group & 0xff;

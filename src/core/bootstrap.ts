@@ -394,10 +394,10 @@ export async function generateBootstrap(input: BootstrapInput): Promise<Bootstra
       nameserverHost: ns,
       nameserverHosts: authoritativeNsHosts,
       ttl,
-      websiteIpv4: input.websiteIpv4,
-      websiteIpv6: input.websiteIpv6,
-      tlsaRecord,
-      tlsaOwner: owner
+      tlsaOwner: owner,
+      ...(input.websiteIpv4 !== undefined ? { websiteIpv4: input.websiteIpv4 } : {}),
+      ...(input.websiteIpv6 !== undefined ? { websiteIpv6: input.websiteIpv6 } : {}),
+      ...(tlsaRecord !== undefined ? { tlsaRecord } : {})
     })
     : [];
 
@@ -441,7 +441,7 @@ export async function generateBootstrap(input: BootstrapInput): Promise<Bootstra
       mode: effectiveMode,
       dnsServerPreset: preset,
       parentRecordCount: parentRecords.length,
-      hnsResourceSizeBytes
+      ...(hnsResourceSizeBytes !== undefined ? { hnsResourceSizeBytes } : {})
     }
   };
 

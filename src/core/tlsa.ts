@@ -20,9 +20,12 @@ const PEM_RE = /-----BEGIN ([A-Z0-9 ]+)-----([\s\S]*?)-----END \1-----/gm;
 export function parsePemBlocks(input: string): PemBlock[] {
   const blocks: PemBlock[] = [];
   for (const match of input.matchAll(PEM_RE)) {
+    const label = match[1];
+    const body = match[2];
+    if (label === undefined || body === undefined) continue;
     blocks.push({
-      label: match[1].trim(),
-      bytes: base64ToBytes(match[2], `PEM ${match[1].trim()}`)
+      label: label.trim(),
+      bytes: base64ToBytes(body, `PEM ${label.trim()}`)
     });
   }
   return blocks;

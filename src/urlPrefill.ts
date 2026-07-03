@@ -67,7 +67,8 @@ function setupModeFromIntent(intent: string): SetupMode | null {
 
 function inferDomainType(domain: string): DomainType {
   const clean = domain.trim().replace(/^https?:\/\//i, '').replace(/^hns:\/\//i, '');
-  if (!clean || clean.endsWith('/') || !clean.split(/[/?#]/, 1)[0].includes('.')) return 'hns';
+  const host = clean.split(/[/?#]/, 1)[0] ?? '';
+  if (!clean || clean.endsWith('/') || !host.includes('.')) return 'hns';
   return 'icann';
 }
 
