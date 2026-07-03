@@ -22,13 +22,23 @@ function toAsciiHostname(input: string): string {
   }
 }
 
+function toAsciiSingleLabel(input: string): string {
+  try {
+    const suffix = '.hns-idna.invalid';
+    const hostname = new URL(`http://${input}${suffix}/`).hostname;
+    return hostname.endsWith(suffix) ? hostname.slice(0, -suffix.length) : input;
+  } catch {
+    return input;
+  }
+}
+
 export function normalizeDomain(input: string, domainType: DomainType): string {
   let domain = stripProtocolAndPath(input);
   if (!domain) throw new Error('Domain is required.');
 
   if (domainType === 'hns') {
     domain = domain.replace(/\/$/, '');
-    if (!domain.includes('.') && !domain.endsWith('.')) return `${toAsciiHostname(domain)}.`;
+    if (!domain.includes('.') && !domain.endsWith('.')) return `${toAsciiSingleLabel(domain)}.`;
   }
 
   domain = toAsciiHostname(domain);

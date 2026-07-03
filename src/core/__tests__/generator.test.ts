@@ -16,6 +16,11 @@ describe('domain normalization', () => {
     expect(normalizeDomain('example/', 'hns')).toBe('example.');
   });
 
+  it('keeps numeric HNS roots as labels instead of IPv4 hosts', () => {
+    expect(normalizeDomain('192', 'hns')).toBe('192.');
+    expect(normalizeDomain('192/', 'hns')).toBe('192.');
+  });
+
   it('normalizes ICANN domains', () => {
     expect(normalizeDomain('Example.COM', 'icann')).toBe('example.com.');
   });
@@ -78,10 +83,18 @@ describe('URL prefill', () => {
     const prefill = readUrlPrefillFromSearch('?domain=example&intent=generate_tlsa');
 
     expect(prefill.hasPrefill).toBe(true);
-    expect(prefill.domainInput).toBe('example');
+    expect(prefill.domainInput).toBe('example/');
     expect(prefill.domainType).toBe('hns');
     expect(prefill.setupMode).toBe('delegated');
     expect(prefill.intent).toBe('generate_tlsa');
+  });
+
+  it('prefills numeric HNS names without IPv4 reinterpretation', () => {
+    const prefill = readUrlPrefillFromSearch('?domain=192&domain_type=hns&intent=review');
+
+    expect(prefill.domainInput).toBe('192/');
+    expect(prefill.domainType).toBe('hns');
+    expect(normalizeDomain(prefill.domainInput, prefill.domainType)).toBe('192.');
   });
 
   it('prefills SYNTH nameserver mode with nameserver and website addresses', () => {

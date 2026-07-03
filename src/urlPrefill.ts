@@ -71,6 +71,16 @@ function inferDomainType(domain: string): DomainType {
   return 'icann';
 }
 
+function normalizeDomainInput(value: string, domainType: DomainType): string {
+  if (domainType !== 'hns') return value;
+  const clean = value.trim();
+  if (!clean) return clean;
+  const withoutProtocol = clean.replace(/^https?:\/\//i, '').replace(/^hns:\/\//i, '');
+  const root = withoutProtocol.split(/[/?#]/, 1)[0];
+  if (!root || root.includes('.')) return clean;
+  return `${root}/`;
+}
+
 function parsePort(value: string): number {
   const port = Number.parseInt(value, 10);
   return Number.isInteger(port) && port > 0 && port <= 65535 ? port : DEFAULT_PREFILL.port;
@@ -84,10 +94,11 @@ export function readUrlPrefillFromSearch(search: string): UrlPrefill {
   const params = new URLSearchParams(search);
   if (!Array.from(params.keys()).length) return {...DEFAULT_PREFILL};
 
-  const domainInput = valueFor(params, ['domain', 'name', 'domainInput', 'domain_input']);
+  const rawDomainInput = valueFor(params, ['domain', 'name', 'domainInput', 'domain_input']);
   const intent = valueFor(params, ['intent', 'action', 'next_step']);
   const explicitDomainType = normalizeDomainType(valueFor(params, ['domainType', 'domain_type', 'type']));
-  const domainType = explicitDomainType ?? inferDomainType(domainInput);
+  const domainType = explicitDomainType ?? inferDomainType(rawDomainInput);
+  const domainInput = normalizeDomainInput(rawDomainInput, domainType);
   const explicitMode = normalizeSetupMode(valueFor(params, ['setupMode', 'setup_mode', 'mode']));
   let setupMode = explicitMode ?? setupModeFromIntent(intent) ?? DEFAULT_PREFILL.setupMode;
   if (domainType === 'icann' && setupMode === 'hns-inline') setupMode = 'delegated';
