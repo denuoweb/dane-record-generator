@@ -512,7 +512,7 @@ function App() {
               autoComplete="off"
               autoCapitalize="none"
               spellCheck={false}
-              pattern={domainType === 'hns' ? '[a-z0-9](?:[a-z0-9_-]{0,61}[a-z0-9])?/' : undefined}
+              pattern={domainType === 'hns' ? '[a-z0-9](?:(?:[a-z0-9]|_|-){0,61}[a-z0-9])?/' : undefined}
               title={domainType === 'hns' ? t.fields.hnsDomainHelp : undefined}
             />
             <FieldHowToText summary={t.faq.domainSummary} body={t.faq.domainBody} />
