@@ -190,6 +190,9 @@ describe('bootstrap generator', () => {
     });
 
     expect(result.parentRecords.some((line) => line.value.startsWith('GLUE4 ns1.example.'))).toBe(true);
+    const walletCommand = result.parentRecords.find((line) => line.value.includes('hsw-cli rpc sendupdate'));
+    expect(walletCommand?.value).toContain(`hsw-cli rpc sendupdate 'example' '{"records":[{"type":"GLUE4","ns":"ns1.example.","address":"203.0.113.10"}]}'`);
+    expect(walletCommand?.value).toContain(`hsd-cli rpc getnameresource 'example'`);
     expect(result.authoritativeRecords.some((line) => line.value.includes(' IN A 203.0.113.20'))).toBe(true);
     expect(result.authoritativeRecords.some((line) => line.value.includes(' IN TLSA 3 1 1 '))).toBe(true);
     expect(result.webServerNotes.some((line) => line.value.includes('current and next TLSA'))).toBe(true);
@@ -210,6 +213,7 @@ describe('bootstrap generator', () => {
     });
 
     expect(result.parentRecords.map((line) => line.value)).toContain('SYNTH4 203.0.113.10');
+    expect(result.parentRecords.find((line) => line.value.includes('hsw-cli rpc sendupdate'))?.value).toContain(`{"records":[{"type":"SYNTH4","address":"203.0.113.10"}]}`);
     expect(result.authoritativeRecords.some((line) => line.value === 'example. 3600 IN NS _pc0722g._synth.')).toBe(true);
     expect(result.authoritativeRecords.some((line) => line.value === 'example. 3600 IN A 203.0.113.20')).toBe(true);
     expect(result.authoritativeRecords.some((line) => line.value.includes(' IN TLSA 3 1 1 '))).toBe(true);
@@ -290,6 +294,20 @@ describe('bootstrap generator', () => {
 
     expect(result.statusChecks.find((item) => item.label === 'DS')?.status).toBe('missing');
     expect(result.statusChecks.find((item) => item.label === 'TLSA')?.status).toBe('missing');
+  });
+
+  it('does not emit an empty HNS update command when parent records are missing', async () => {
+    const result = await generateBootstrap({
+      domainType: 'hns',
+      setupMode: 'delegated',
+      domainInput: 'example/',
+      port: 443,
+      protocol: 'tcp'
+    });
+
+    const walletCommand = result.parentRecords.find((line) => line.value.includes('hsw-cli rpc sendupdate'));
+    expect(walletCommand?.value).toContain('<resource-json-from-concrete-parent-records>');
+    expect(walletCommand?.value).not.toContain('{"records":[]}');
   });
 
   it('keeps website IP hints technically distinct from A and AAAA records', async () => {

@@ -28,6 +28,10 @@ function stripRecordPrefix(record: string, prefix: string): string {
   return record.startsWith(prefix) ? record.slice(prefix.length) : record;
 }
 
+function shellQuote(value: string): string {
+  return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
 function estimateHnsResourceSize(records: HnsParentRecordDraft[]): number {
   return new TextEncoder().encode(JSON.stringify({ records })).length;
 }
@@ -229,6 +233,32 @@ function buildIntegrationRecord(parentDraft: HnsParentRecordDraft[], input: Boot
   }];
 }
 
+function buildHnsWalletCommand(parentDraft: HnsParentRecordDraft[], domain: string): GeneratedLine {
+  const name = shellQuote(rootless(domain));
+  const resource = parentDraft.length > 0
+    ? shellQuote(JSON.stringify({ records: parentDraft }))
+    : '<resource-json-from-concrete-parent-records>';
+
+  return {
+    value: [
+      '# Optional if this name is not in the primary wallet:',
+      'hsw-cli rpc selectwallet <wallet-id>',
+      '',
+      '# Create an UPDATE transaction JSON without broadcasting:',
+      `hsw-cli rpc createupdate ${name} ${resource}`,
+      '',
+      '# Broadcast the UPDATE from the selected wallet:',
+      `hsw-cli rpc sendupdate ${name} ${resource}`,
+      '',
+      '# After mining and a tree interval, inspect the resource seen by hsd:',
+      `hsd-cli rpc getnameresource ${name}`
+    ].join('\n'),
+    explanation: parentDraft.length > 0
+      ? 'hsw-cli creates or broadcasts the HNS name UPDATE from the wallet. hsd-cli checks the name resource after confirmation and the tree interval.'
+      : 'Fill in concrete NS, GLUE, SYNTH, or DS records before broadcasting an HNS name UPDATE. Do not send an empty records array unless you mean to clear the name resource.'
+  };
+}
+
 function buildSections(result: Omit<BootstrapResult, 'sections'>): OutputSection[] {
   const sections: OutputSection[] = [
     { id: 'steps', title: 'Do these steps', audience: 'verify', lines: result.quickSteps, compact: true },
@@ -349,6 +379,10 @@ export async function generateBootstrap(input: BootstrapInput): Promise<Bootstra
       });
     }
 
+  }
+
+  if (input.domainType === 'hns') {
+    parentRecords.push(buildHnsWalletCommand(parentDraft, normalizedDomain));
   }
 
   if (effectiveMode === 'delegated' || effectiveMode === 'hns-inline') {

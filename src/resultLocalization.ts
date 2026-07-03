@@ -154,6 +154,8 @@ const explanationsEn = {
   hnsNs: 'HNS wallet-side delegation record pointing the name at an external authoritative nameserver.',
   hnsDs: 'HNS wallet-side DNSSEC delegation signer record derived from the child-zone DNSKEY.',
   dsPlaceholder: 'Placeholder: paste your authoritative-zone DNSKEY to generate the exact parent-side DS record.',
+  hnsWalletCommands: 'hsw-cli creates or broadcasts the HNS name UPDATE from the wallet. hsd-cli checks the name resource after confirmation and the tree interval.',
+  hnsWalletCommandsPlaceholder: 'Fill in concrete NS, GLUE, SYNTH, or DS records before broadcasting an HNS name UPDATE. Do not send an empty records array unless you mean to clear the name resource.',
   registrarNs: 'Registrar-side nameserver delegation.',
   registrarGlue4: 'Registrar-side glue is needed because the nameserver is inside the delegated domain.',
   registrarGlue6: 'Registrar-side IPv6 glue is needed because the nameserver is inside the delegated domain.',
