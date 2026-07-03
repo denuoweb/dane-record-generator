@@ -1,6 +1,9 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { BootstrapInput, BootstrapNotice, BootstrapResult, DnsServerPreset, DomainType, GeneratedLine, OutputSection, SetupMode, StatusCheck } from './core/types';
+import type { BootstrapInput, BootstrapResult, DnsServerPreset, DomainType, GeneratedLine, OutputSection, SetupMode, StatusCheck } from './core/types';
 import { generateBootstrap } from './core/bootstrap';
+import { isInBailiwick, normalizeDomain, validateDomainName, validateHostname, validateIpv4, validateIpv6 } from './core/domain';
+import { parseDnskey } from './core/dnssec';
+import { extractSpkiFromPem } from './core/tlsa';
 import { guidanceForIntent, type HandoffGuidance } from './handoffGuidance';
 import { isLanguageCode, languageOptions, localeText, type LanguageCode, type LocaleText } from './i18n';
 import { localizeBootstrapResult } from './resultLocalization';
@@ -32,12 +35,50 @@ interface HowToContext {
   dnskeyZone: string;
 }
 
-function withoutRootDot(value: string): string {
-  return value.endsWith('.') ? value.slice(0, -1) : value;
+type FieldStatus = 'neutral' | 'needed' | 'error' | 'good';
+type FieldKey = 'domain' | 'nameserverHost' | 'nameserverIpv4' | 'nameserverIpv6' | 'websiteIpv4' | 'websiteIpv6' | 'port' | 'pemInput' | 'dnskeyInput';
+type TouchedFields = Partial<Record<FieldKey, boolean>>;
+
+function withoutRootDot(value: string): string { return value.endsWith('.') ? value.slice(0, -1) : value; }
+
+function ensureRootDot(value: string): string { return value.endsWith('.') ? value : `${value}.`; }
+
+function isValidPort(value: number): boolean { return Number.isInteger(value) && value > 0 && value <= 65535; }
+
+function isValidDnskeyInput(value: string): boolean {
+  if (!value.trim()) return false;
+  try {
+    parseDnskey(value);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-function ensureRootDot(value: string): string {
-  return value.endsWith('.') ? value : `${value}.`;
+function isValidPemInput(value: string): boolean {
+  if (!value.trim()) return false;
+  try {
+    extractSpkiFromPem(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function requiredStatus(value: string, touched: boolean | undefined, valid: boolean): FieldStatus {
+  if (!value.trim()) return touched ? 'error' : 'needed';
+  return valid ? 'good' : 'error';
+}
+
+function optionalStatus(value: string, valid: boolean): FieldStatus {
+  if (!value.trim()) return 'neutral';
+  return valid ? 'good' : 'error';
+}
+
+function requiredPairPrimaryStatus(primary: string, secondary: string, primaryTouched: boolean | undefined, secondaryTouched: boolean | undefined, primaryValid: boolean, secondaryValid: boolean): FieldStatus {
+  if (primary.trim()) return primaryValid ? 'good' : 'error';
+  if (secondary.trim() && secondaryValid) return 'neutral';
+  return primaryTouched || secondaryTouched ? 'error' : 'needed';
 }
 
 function asciiHost(value: string): string {
@@ -52,9 +93,10 @@ function hostPort(host: string, port: number): string {
   return host.includes(':') && !host.startsWith('[') ? `[${host}]:${port}` : `${host}:${port}`;
 }
 
-function Field(props: { label: string; help?: string; children: ReactNode }) {
+function Field(props: { children: ReactNode; help?: string; label: string; status?: FieldStatus }) {
+  const status = props.status ?? 'neutral';
   return (
-    <div className="field">
+    <div className={`field field-${status}`}>
       <span className="field-label">{props.label}</span>
       {props.help && <span className="field-help">{props.help}</span>}
       {props.children}
@@ -224,21 +266,6 @@ function StatusList(props: { checks: StatusCheck[]; t: LocaleText }) {
   );
 }
 
-function Notices(props: { notices: BootstrapNotice[]; hasHelp?: boolean; children?: ReactNode; t: LocaleText }) {
-  if (!props.notices.length && !props.hasHelp) return null;
-  return (
-    <section className="notice-card">
-      <h2>{props.t.notices.title}</h2>
-      <ul>
-        {props.notices.map((item) => (
-          <li className={item.severity} key={`${item.severity}-${item.message}`}>{item.message}</li>
-        ))}
-        {props.children}
-      </ul>
-    </section>
-  );
-}
-
 function SetupSummary(props: { result: BootstrapResult; t: LocaleText }) {
   const mode = props.result.diagnostics.mode === 'hns-inline' ? props.t.summary.hnsInline : props.t.summary.delegated;
   const glue = props.result.diagnostics.needsGlue ? props.t.summary.glueRequired : props.t.summary.externalNameserver;
@@ -288,6 +315,7 @@ function App() {
   const [pemInput, setPemInput] = useState(urlPrefill.pemInput);
   const [dnskeyInput, setDnskeyInput] = useState(urlPrefill.dnskeyInput);
   const [dnsServerPreset, setDnsServerPreset] = useState<DnsServerPreset>(urlPrefill.dnsServerPreset);
+  const [touchedFields, setTouchedFields] = useState<TouchedFields>({});
   const [result, setResult] = useState<BootstrapResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const interactionScrollY = useRef<number | null>(null);
@@ -375,6 +403,10 @@ function App() {
     });
   }
 
+  function markTouched(field: FieldKey) {
+    setTouchedFields((current) => current[field] ? current : { ...current, [field]: true });
+  }
+
   function handleDomainTypeChange(nextDomainType: DomainType) {
     preserveScroll(() => {
       const currentDomain = domainInput.trim();
@@ -400,6 +432,7 @@ function App() {
   }
 
   function loadExample(kind: 'hns-delegated' | 'hns-inline' | 'icann') {
+    setTouchedFields({});
     setPemInput('');
     setDnskeyInput('');
     setNameserverHost('');
@@ -440,6 +473,47 @@ function App() {
   const handoffGuidance = useMemo(() => guidanceForIntent(urlPrefill.intent), [urlPrefill.intent]);
   const domainPlaceholder = domainType === 'hns' ? HNS_EXAMPLE_DOMAIN : ICANN_EXAMPLE_DOMAIN;
   const nameserverPlaceholder = domainType === 'hns' ? HNS_EXAMPLE_NAMESERVER : ICANN_EXAMPLE_NAMESERVER;
+  const fieldStatuses = useMemo(() => {
+    let normalizedDomain: string | null = null;
+    try {
+      const candidate = normalizeDomain(domainInput, domainType);
+      if (validateDomainName(candidate)) normalizedDomain = candidate;
+    } catch {
+      normalizedDomain = null;
+    }
+
+    const nameserverHostValid = nameserverHost.trim() ? validateHostname(nameserverHost) : false;
+    let nameserverAddressRequired = setupMode === 'hns-inline' && domainType === 'hns';
+    if (setupMode === 'delegated' && normalizedDomain && nameserverHostValid) {
+      try {
+        nameserverAddressRequired = isInBailiwick(nameserverHost, normalizedDomain);
+      } catch {
+        nameserverAddressRequired = false;
+      }
+    }
+
+    const nameserverIpv4Valid = validateIpv4(nameserverIpv4);
+    const nameserverIpv6Valid = validateIpv6(nameserverIpv6);
+    const websiteIpv4Valid = validateIpv4(websiteIpv4);
+    const websiteIpv6Valid = validateIpv6(websiteIpv6);
+
+    return {
+      certificate: requiredStatus(pemInput, touchedFields.pemInput, isValidPemInput(pemInput)),
+      dnskey: requiredStatus(dnskeyInput, touchedFields.dnskeyInput, isValidDnskeyInput(dnskeyInput)),
+      dnsServerPreset: 'good',
+      domain: requiredStatus(domainInput, touchedFields.domain, Boolean(normalizedDomain)),
+      domainType: 'good',
+      nameserverHost: setupMode === 'delegated' ? requiredStatus(nameserverHost, touchedFields.nameserverHost, nameserverHostValid) : 'neutral',
+      nameserverIpv4: nameserverAddressRequired
+        ? requiredPairPrimaryStatus(nameserverIpv4, nameserverIpv6, touchedFields.nameserverIpv4, touchedFields.nameserverIpv6, nameserverIpv4Valid, nameserverIpv6Valid)
+        : optionalStatus(nameserverIpv4, nameserverIpv4Valid),
+      nameserverIpv6: optionalStatus(nameserverIpv6, nameserverIpv6Valid),
+      port: isValidPort(port) ? 'good' : touchedFields.port ? 'error' : 'needed',
+      setupMode: 'good',
+      websiteIpv4: requiredPairPrimaryStatus(websiteIpv4, websiteIpv6, touchedFields.websiteIpv4, touchedFields.websiteIpv6, websiteIpv4Valid, websiteIpv6Valid),
+      websiteIpv6: optionalStatus(websiteIpv6, websiteIpv6Valid)
+    } satisfies Record<string, FieldStatus>;
+  }, [domainInput, domainType, dnskeyInput, nameserverHost, nameserverIpv4, nameserverIpv6, pemInput, port, setupMode, touchedFields, websiteIpv4, websiteIpv6]);
   const howToContext = useMemo<HowToContext>(() => {
     const fallbackDomain = domainInput.trim() ? ensureRootDot(asciiHost(domainInput.trim())) : '<domain>.';
     const dnskeyZone = result?.normalizedDomain ?? fallbackDomain;
@@ -491,7 +565,7 @@ function App() {
       <section className="panel grid">
         <div className="form-card">
           <h2>{t.sections.domain}</h2>
-          <Field label={t.fields.domainType} help={t.fields.domainTypeHelp}>
+          <Field label={t.fields.domainType} help={t.fields.domainTypeHelp} status={fieldStatuses.domainType}>
             <select
               value={domainType}
               onFocus={rememberScrollY}
@@ -504,7 +578,7 @@ function App() {
             </select>
             <FieldHowToText summary={t.faq.splitSummary} body={t.faq.splitBody} />
           </Field>
-          <Field label={t.fields.setupMode} help={t.fields.setupModeHelp}>
+          <Field label={t.fields.setupMode} help={t.fields.setupModeHelp} status={fieldStatuses.setupMode}>
             <select
               value={setupMode}
               onFocus={rememberScrollY}
@@ -517,10 +591,14 @@ function App() {
             </select>
             <FieldHowToText summary={t.faq.setupModeSummary} body={t.faq.setupModeBody} />
           </Field>
-          <Field label={t.fields.domain} help={domainType === 'hns' ? t.fields.hnsDomainHelp : t.fields.domainHelp}>
+          <Field label={t.fields.domain} help={domainType === 'hns' ? t.fields.hnsDomainHelp : t.fields.domainHelp} status={fieldStatuses.domain}>
             <input
               value={domainInput}
-              onChange={(event) => setDomainInput(event.target.value)}
+              onBlur={() => markTouched('domain')}
+              onChange={(event) => {
+                markTouched('domain');
+                setDomainInput(event.target.value);
+              }}
               placeholder={domainPlaceholder}
               autoComplete="off"
               autoCapitalize="none"
@@ -535,7 +613,7 @@ function App() {
 
         <div className="form-card">
           <h2>{t.sections.server}</h2>
-          <Field label={t.fields.dnsServerPreset} help={t.fields.dnsServerPresetHelp}>
+          <Field label={t.fields.dnsServerPreset} help={t.fields.dnsServerPresetHelp} status={fieldStatuses.dnsServerPreset}>
             <select value={dnsServerPreset} onChange={(event) => setDnsServerPreset(event.target.value as DnsServerPreset)}>
               <option value="generic-zone">{t.options.genericZone}</option>
               <option value="hosted-dns">{t.options.hostedDns}</option>
@@ -548,37 +626,108 @@ function App() {
             <FieldHowToText summary={t.faq.hostedSummary} body={t.faq.hostedBody} />
           </Field>
           {setupMode !== 'hns-inline' && (
-            <Field label={t.fields.nameserverHost} help={t.fields.nameserverHostHelp}>
-              <input value={nameserverHost} onChange={(event) => setNameserverHost(event.target.value)} placeholder={nameserverPlaceholder} autoComplete="off" />
+            <Field label={t.fields.nameserverHost} help={t.fields.nameserverHostHelp} status={fieldStatuses.nameserverHost}>
+              <input
+                value={nameserverHost}
+                onBlur={() => markTouched('nameserverHost')}
+                onChange={(event) => {
+                  markTouched('nameserverHost');
+                  setNameserverHost(event.target.value);
+                }}
+                placeholder={nameserverPlaceholder}
+                autoComplete="off"
+              />
             </Field>
           )}
-          <Field label={t.fields.nameserverIpv4} help={t.fields.nameserverIpv4Help}>
-            <input value={nameserverIpv4} onChange={(event) => setNameserverIpv4(event.target.value)} placeholder={EXAMPLE_NAMESERVER_IPV4} autoComplete="off" />
+          <Field label={t.fields.nameserverIpv4} help={t.fields.nameserverIpv4Help} status={fieldStatuses.nameserverIpv4}>
+            <input
+              value={nameserverIpv4}
+              onBlur={() => markTouched('nameserverIpv4')}
+              onChange={(event) => {
+                markTouched('nameserverIpv4');
+                setNameserverIpv4(event.target.value);
+              }}
+              placeholder={EXAMPLE_NAMESERVER_IPV4}
+              autoComplete="off"
+            />
             <FieldHowToText summary={t.faq.nameserverIpv4Summary} body={t.faq.nameserverIpv4Body} />
           </Field>
-          <Field label={t.fields.nameserverIpv6} help={t.fields.nameserverIpv6Help}>
-            <input value={nameserverIpv6} onChange={(event) => setNameserverIpv6(event.target.value)} autoComplete="off" />
+          <Field label={t.fields.nameserverIpv6} help={t.fields.nameserverIpv6Help} status={fieldStatuses.nameserverIpv6}>
+            <input
+              value={nameserverIpv6}
+              onBlur={() => markTouched('nameserverIpv6')}
+              onChange={(event) => {
+                markTouched('nameserverIpv6');
+                setNameserverIpv6(event.target.value);
+              }}
+              autoComplete="off"
+            />
           </Field>
-          <Field label={t.fields.websiteIpv4} help={t.fields.websiteIpv4Help}>
-            <input value={websiteIpv4} onChange={(event) => setWebsiteIpv4(event.target.value)} placeholder={EXAMPLE_WEBSITE_IPV4} autoComplete="off" />
+          <Field label={t.fields.websiteIpv4} help={t.fields.websiteIpv4Help} status={fieldStatuses.websiteIpv4}>
+            <input
+              value={websiteIpv4}
+              onBlur={() => markTouched('websiteIpv4')}
+              onChange={(event) => {
+                markTouched('websiteIpv4');
+                setWebsiteIpv4(event.target.value);
+              }}
+              placeholder={EXAMPLE_WEBSITE_IPV4}
+              autoComplete="off"
+            />
             <FieldHowToText summary={t.faq.websiteIpv4Summary} body={t.faq.websiteIpv4Body} />
           </Field>
-          <Field label={t.fields.websiteIpv6} help={t.fields.websiteIpv6Help}>
-            <input value={websiteIpv6} onChange={(event) => setWebsiteIpv6(event.target.value)} autoComplete="off" />
+          <Field label={t.fields.websiteIpv6} help={t.fields.websiteIpv6Help} status={fieldStatuses.websiteIpv6}>
+            <input
+              value={websiteIpv6}
+              onBlur={() => markTouched('websiteIpv6')}
+              onChange={(event) => {
+                markTouched('websiteIpv6');
+                setWebsiteIpv6(event.target.value);
+              }}
+              autoComplete="off"
+            />
           </Field>
         </div>
 
         <div className="form-card">
           <h2>{t.sections.dane}</h2>
-          <Field label={t.fields.port} help={t.fields.portHelp}>
-            <input type="number" min="1" max="65535" value={port} onChange={(event) => setPort(Number(event.target.value))} />
+          <Field label={t.fields.port} help={t.fields.portHelp} status={fieldStatuses.port}>
+            <input
+              type="number"
+              min="1"
+              max="65535"
+              value={port}
+              onBlur={() => markTouched('port')}
+              onChange={(event) => {
+                markTouched('port');
+                setPort(Number(event.target.value));
+              }}
+            />
           </Field>
-          <Field label={t.fields.certificate} help={t.fields.certificateHelp}>
-            <textarea rows={7} value={pemInput} onChange={(event) => setPemInput(event.target.value)} placeholder={CERTIFICATE_PLACEHOLDER} />
+          <Field label={t.fields.certificate} help={t.fields.certificateHelp} status={fieldStatuses.certificate}>
+            <textarea
+              rows={7}
+              value={pemInput}
+              onBlur={() => markTouched('pemInput')}
+              onChange={(event) => {
+                markTouched('pemInput');
+                setPemInput(event.target.value);
+              }}
+              placeholder={CERTIFICATE_PLACEHOLDER}
+            />
             <CertificateHowTo context={howToContext} t={t} />
           </Field>
-          <Field label={t.fields.dnskey} help={t.fields.dnskeyHelp}>
-            <textarea rows={4} value={dnskeyInput} onChange={(event) => setDnskeyInput(event.target.value)} placeholder={`${howToContext.dnskeyZone} 3600 IN DNSKEY 257 3 13 ...`} />
+          <Field label={t.fields.dnskey} help={t.fields.dnskeyHelp} status={fieldStatuses.dnskey}>
+            <textarea
+              rows={4}
+              value={dnskeyInput}
+              onBlur={() => markTouched('dnskeyInput')}
+              onChange={(event) => {
+                markTouched('dnskeyInput');
+                setDnskeyInput(event.target.value);
+              }}
+              placeholder={`${howToContext.dnskeyZone} 3600 IN DNSKEY 257 3 13 ...`}
+            />
             <DnskeyHowTo context={howToContext} t={t} />
           </Field>
         </div>
@@ -590,32 +739,6 @@ function App() {
         <section className="outputs">
           <SetupSummary result={displayResult} t={t} />
           <StatusList checks={displayResult.statusChecks} t={t} />
-          <Notices
-            notices={displayResult.notices}
-            hasHelp={!pemInput.trim() || !dnskeyInput.trim()}
-            t={t}
-          >
-            {!pemInput.trim() && (
-              <li className="info">
-                <CertificateHowTo
-                  attention
-                  context={howToContext}
-                  summaryLabel={`${t.fields.certificate} - ${t.howTo.summary}`}
-                  t={t}
-                />
-              </li>
-            )}
-            {!dnskeyInput.trim() && (
-              <li className="info">
-                <DnskeyHowTo
-                  attention
-                  context={howToContext}
-                  summaryLabel={`${t.fields.dnskey} - ${t.howTo.summary}`}
-                  t={t}
-                />
-              </li>
-            )}
-          </Notices>
 
           {sections.map((section) => <OutputBox key={section.id} section={section} result={displayResult} t={t} />)}
         </section>

@@ -227,6 +227,24 @@ textarea {
   background: #fffdf8;
 }
 
+.field-good :where(input, select, textarea) {
+  border-color: #6ea26a;
+  background: #f1faef;
+  box-shadow: 0 0 0 2px rgb(110 162 106 / 14%);
+}
+
+.field-needed :where(input, select, textarea) {
+  border-color: #c49a25;
+  background: #fff8df;
+  box-shadow: 0 0 0 2px rgb(196 154 37 / 16%);
+}
+
+.field-error :where(input, select, textarea) {
+  border-color: #bf4e4e;
+  background: #fff0ee;
+  box-shadow: 0 0 0 2px rgb(191 78 78 / 16%);
+}
+
 textarea,
 pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
 textarea { font-size: 0.84rem; }

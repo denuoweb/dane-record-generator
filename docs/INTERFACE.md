@@ -97,8 +97,16 @@ Field-level help:
 
 - TLSA certificate or PUBLIC KEY includes a `How to get this` disclosure with OpenSSL examples and private-key warnings. The command uses the current website IP or domain, current HTTPS port, and current normalized domain for SNI.
 - DNSKEY includes a `How to get this` disclosure that explains when to enable DNSSEC, where hosted DNS panels expose DNSKEY/DS, and how to query DNSKEY with `dig`. The command uses the current nameserver IP or hostname and current normalized zone name.
-- The same disclosures appear in `Needs attention` when the relevant field is blank, including HNS SYNTH mode. This prevents a `TLSA Needed` status from appearing without a nearby TLSA input explanation.
 - Generated web notes must warn that TLSA `3 1 1` pins the service public key, key rollover needs current + next TLSA records across TTL windows, and DANE is enforced only by clients that validate DNSSEC and check TLSA.
+
+## Field Validation
+
+Validation is shown on the input fields instead of a separate attention card:
+
+- Green fields are valid or already usable.
+- Yellow fields are required for the current domain type and setup mode but have not been touched yet.
+- Red fields are malformed, or required and still blank after user interaction.
+- Optional blank fields stay neutral.
 
 ## Verification behavior
 
@@ -113,12 +121,11 @@ The UI should explain that `dig +dnssec` alone does not prove validation and tha
 
 1. Setup summary
 2. Setup status
-3. Needs attention
-4. Parent-side records
-5. Authoritative DNS records with server preset tabs
-6. Verify commands
-7. Web server note
-8. Integrator JSON
+3. Parent-side records
+4. Authoritative DNS records with server preset tabs
+5. Verify commands
+6. Web server note
+7. Integrator JSON
 
 ## Copy policy
 
