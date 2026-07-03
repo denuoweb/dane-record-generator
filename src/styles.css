@@ -231,6 +231,50 @@ pre {
   border: 1px solid #eee2c8;
 }
 
+.wallet-entry-options {
+  border-top: 1px solid #eee8dc;
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
+.wallet-tab-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.wallet-tab-button {
+  border-color: #cfc7b8;
+  border-radius: 10px;
+  background: #fffdf8;
+  color: #181816;
+  min-height: 38px;
+}
+
+.wallet-tab-button.active {
+  border-color: #181816;
+  background: #181816;
+  color: #fff9eb;
+}
+
+.wallet-tab-panel {
+  border: 1px solid #e5ded0;
+  border-radius: 14px;
+  background: #fffdf8;
+  padding: 12px;
+}
+
+.wallet-tab-panel pre {
+  margin: 0;
+}
+
+.wallet-tab-panel p {
+  color: #514c44;
+  line-height: 1.55;
+  margin: 10px 2px 0;
+}
+
 .status-list {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));

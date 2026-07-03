@@ -103,6 +103,10 @@ function lineText(lines: GeneratedLine[]): string {
   return lines.map((line) => line.value).join('\n\n');
 }
 
+function isHnsWalletOption(line: GeneratedLine): line is GeneratedLine & { presentation: NonNullable<GeneratedLine['presentation']> } {
+  return line.presentation?.kind === 'hns-wallet-option';
+}
+
 function localizedSectionTitle(section: OutputSection, result: BootstrapResult, t: LocaleText): string {
   if (section.id === 'parent') return result.normalizedDomain && result.parentTitle.includes('HNS') ? t.output.parentHns : t.output.parentIcann;
   if (section.id === 'authoritative') return t.output.authoritative;
@@ -115,7 +119,19 @@ function localizedSectionTitle(section: OutputSection, result: BootstrapResult, 
 }
 
 function OutputBox(props: { section: OutputSection; result: BootstrapResult; t: LocaleText }) {
-  const text = lineText(props.section.lines);
+  const walletOptions = props.section.lines.filter(isHnsWalletOption);
+  const recordLines = walletOptions.length > 0 ? props.section.lines.filter((line) => !isHnsWalletOption(line)) : props.section.lines;
+  const defaultWalletTab = walletOptions.find((line) => line.presentation.defaultSelected)?.presentation.tabId ?? walletOptions[0]?.presentation.tabId ?? '';
+  const [activeWalletTab, setActiveWalletTab] = useState(defaultWalletTab);
+  const activeWalletOption = walletOptions.find((line) => line.presentation.tabId === activeWalletTab) ?? walletOptions[0];
+  const recordText = lineText(recordLines);
+  const text = walletOptions.length > 0 && activeWalletOption ? [recordText, activeWalletOption.value].filter(Boolean).join('\n\n') : lineText(props.section.lines);
+
+  useEffect(() => {
+    if (walletOptions.length === 0) return;
+    if (!walletOptions.some((line) => line.presentation.tabId === activeWalletTab)) setActiveWalletTab(defaultWalletTab);
+  }, [activeWalletTab, defaultWalletTab, walletOptions]);
+
   return (
     <section className={`output-card audience-${props.section.audience}`}>
       <div className="output-heading">
@@ -125,15 +141,40 @@ function OutputBox(props: { section: OutputSection; result: BootstrapResult; t: 
         </div>
         <CopyButton text={text} t={props.t} />
       </div>
-      <pre className={props.section.compact ? 'compact-pre' : undefined}>{text || props.t.copy.nothing}</pre>
+      <pre className={props.section.compact ? 'compact-pre' : undefined}>{recordText || props.t.copy.nothing}</pre>
       {!props.section.compact && (
         <div className="line-notes">
-          {props.section.lines.map((line) => (
+          {recordLines.map((line) => (
             <details key={line.value}>
               <summary>{line.value.split('\n')[0]}</summary>
               <p>{line.explanation}</p>
             </details>
           ))}
+        </div>
+      )}
+      {walletOptions.length > 0 && activeWalletOption && (
+        <div className="wallet-entry-options">
+          <div className="wallet-tab-list" role="tablist" aria-label="HNS wallet entry method">
+            {walletOptions.map((line) => {
+              const selected = line.presentation.tabId === activeWalletOption.presentation.tabId;
+              return (
+                <button
+                  type="button"
+                  className={`wallet-tab-button${selected ? ' active' : ''}`}
+                  role="tab"
+                  aria-selected={selected}
+                  key={line.presentation.tabId}
+                  onClick={() => setActiveWalletTab(line.presentation.tabId)}
+                >
+                  {line.presentation.tabLabel}
+                </button>
+              );
+            })}
+          </div>
+          <div className="wallet-tab-panel" role="tabpanel">
+            <pre>{activeWalletOption.value}</pre>
+            <p>{activeWalletOption.explanation}</p>
+          </div>
         </div>
       )}
     </section>

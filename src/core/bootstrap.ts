@@ -255,7 +255,13 @@ function buildHnsWalletCommand(parentDraft: HnsParentRecordDraft[], domain: stri
     ].join('\n'),
     explanation: parentDraft.length > 0
       ? 'hsw-cli creates or broadcasts the HNS name UPDATE from the wallet. hsd-cli checks the name resource after confirmation and the tree interval.'
-      : 'Fill in concrete NS, GLUE, SYNTH, or DS records before broadcasting an HNS name UPDATE. Do not send an empty records array unless you mean to clear the name resource.'
+      : 'Fill in concrete NS, GLUE, SYNTH, or DS records before broadcasting an HNS name UPDATE. Do not send an empty records array unless you mean to clear the name resource.',
+    presentation: {
+      kind: 'hns-wallet-option',
+      tabId: 'cli',
+      tabLabel: 'hsw-cli / hsd-cli',
+      defaultSelected: true
+    }
   };
 }
 
@@ -289,11 +295,14 @@ function buildShakeWalletExample(parentDraft: HnsParentRecordDraft[], domain: st
   ];
 }
 
-function buildHnsWalletUiOptions(parentDraft: HnsParentRecordDraft[], domain: string): GeneratedLine {
-  const name = rootless(domain);
-  const recordLines = parentDraft.length > 0
+function hnsUiRecordLines(parentDraft: HnsParentRecordDraft[]): string[] {
+  return parentDraft.length > 0
     ? parentDraft.map((record) => `- ${formatHnsRecordForUi(record)}`)
     : ['- Fill in concrete NS, GLUE, SYNTH, or DS records first. Do not submit an empty name resource unless you mean to clear existing records.'];
+}
+
+function buildBobWalletOption(parentDraft: HnsParentRecordDraft[], domain: string): GeneratedLine {
+  const name = rootless(domain);
 
   return {
     value: [
@@ -302,18 +311,42 @@ function buildHnsWalletUiOptions(parentDraft: HnsParentRecordDraft[], domain: st
       '2. Open Name Management / Domains, select the name, then open DNS records.',
       '3. Add the concrete HNS parent records below, confirm the wallet prompt, and wait for confirmation plus the tree interval.',
       '',
+      'Concrete parent records to enter:',
+      ...hnsUiRecordLines(parentDraft)
+    ].join('\n'),
+    explanation: parentDraft.length > 0
+      ? 'Bob Wallet can update the same HNS name resource through its desktop UI. Use the concrete parent records shown here and confirm the wallet prompt before broadcasting.'
+      : 'Fill in concrete NS, GLUE, SYNTH, or DS records before using a wallet UI. Do not submit an empty name resource unless you mean to clear existing records.',
+    presentation: {
+      kind: 'hns-wallet-option',
+      tabId: 'bob',
+      tabLabel: 'Bob Wallet'
+    }
+  };
+}
+
+function buildShakeWalletOption(parentDraft: HnsParentRecordDraft[], domain: string): GeneratedLine {
+  const name = rootless(domain);
+
+  return {
+    value: [
       'Shake Wallet / LearnHNS browser wallet UI:',
       `1. Open the extension and unlock the wallet that owns ${name}.`,
       '2. Select the name, open the on-chain records/update view, and add the same concrete records.',
       '3. Confirm the update popup before broadcasting.',
       '',
       'Concrete parent records to enter:',
-      ...recordLines,
+      ...hnsUiRecordLines(parentDraft),
       ...buildShakeWalletExample(parentDraft, domain)
     ].join('\n'),
     explanation: parentDraft.length > 0
-      ? 'Bob Wallet and Shake Wallet can update the same HNS name resource through their UI. Use the concrete parent records shown here and confirm the wallet prompt before broadcasting.'
-      : 'Fill in concrete NS, GLUE, SYNTH, or DS records before using a wallet UI. Do not submit an empty name resource unless you mean to clear existing records.'
+      ? 'Shake Wallet and LearnHNS Wallet can update the same HNS name resource through the browser extension UI. Use the concrete parent records shown here and confirm the wallet prompt before broadcasting.'
+      : 'Fill in concrete NS, GLUE, SYNTH, or DS records before using a wallet UI. Do not submit an empty name resource unless you mean to clear existing records.',
+    presentation: {
+      kind: 'hns-wallet-option',
+      tabId: 'shake',
+      tabLabel: 'Shake Wallet'
+    }
   };
 }
 
@@ -377,15 +410,21 @@ export async function generateBootstrap(input: BootstrapInput): Promise<Bootstra
   }
 
   if (effectiveMode === 'hns-inline') {
+    let hasSynthRecord = false;
     if (nonEmpty(input.nameserverIpv4) && validateIpv4(input.nameserverIpv4)) {
       parentRecords.push({ value: `SYNTH4 ${input.nameserverIpv4}`, explanation: 'HNS wallet-side synthetic IPv4 nameserver referral.' });
       parentDraft.push({ type: 'SYNTH4', address: input.nameserverIpv4 });
       authoritativeNsHosts.push(synthNameserverName(input.nameserverIpv4));
+      hasSynthRecord = true;
     }
     if (nonEmpty(input.nameserverIpv6) && validateIpv6(input.nameserverIpv6)) {
       parentRecords.push({ value: `SYNTH6 ${input.nameserverIpv6}`, explanation: 'HNS wallet-side synthetic IPv6 nameserver referral.' });
       parentDraft.push({ type: 'SYNTH6', address: input.nameserverIpv6 });
       authoritativeNsHosts.push(synthNameserverName(input.nameserverIpv6));
+      hasSynthRecord = true;
+    }
+    if (!hasSynthRecord) {
+      parentRecords.push({ value: 'SYNTH4 <nameserver-ipv4>', explanation: 'Placeholder: add at least one nameserver IPv4 or IPv6 address to generate a concrete HNS SYNTH referral before the DS record.' });
     }
     ns = authoritativeNsHosts[0] ?? ns;
     if (dsRecord && dsRecordText) {
@@ -401,13 +440,20 @@ export async function generateBootstrap(input: BootstrapInput): Promise<Bootstra
 
     if (input.domainType === 'hns') {
       if (inBailiwickNameserver) {
+        let hasGlueRecord = false;
         if (nonEmpty(input.nameserverIpv4)) {
           parentRecords.push({ value: `GLUE4 ${ns} ${input.nameserverIpv4}`, explanation: 'HNS wallet-side glue record for the IPv4 address of your in-name authoritative nameserver.' });
           parentDraft.push({ type: 'GLUE4', ns, address: input.nameserverIpv4 });
+          hasGlueRecord = true;
         }
         if (nonEmpty(input.nameserverIpv6)) {
           parentRecords.push({ value: `GLUE6 ${ns} ${input.nameserverIpv6}`, explanation: 'HNS wallet-side glue record for the IPv6 address of your in-name authoritative nameserver.' });
           parentDraft.push({ type: 'GLUE6', ns, address: input.nameserverIpv6 });
+          hasGlueRecord = true;
+        }
+        if (!hasGlueRecord) {
+          const placeholderHost = nonEmpty(input.nameserverHost) ? ns : '<nameserver-host>';
+          parentRecords.push({ value: `GLUE4 ${placeholderHost} <nameserver-ipv4>`, explanation: 'Placeholder: delegated HNS needs an NS or GLUE referral before the DS record. If the nameserver is inside this name, add GLUE4 or GLUE6 with its address; if it is external, use an NS record.' });
         }
       } else {
         parentRecords.push({ value: `NS ${ns}`, explanation: 'HNS wallet-side delegation record pointing the name at an external authoritative nameserver.' });
@@ -440,8 +486,9 @@ export async function generateBootstrap(input: BootstrapInput): Promise<Bootstra
   }
 
   if (input.domainType === 'hns') {
-    parentRecords.push(buildHnsWalletUiOptions(parentDraft, normalizedDomain));
     parentRecords.push(buildHnsWalletCommand(parentDraft, normalizedDomain));
+    parentRecords.push(buildBobWalletOption(parentDraft, normalizedDomain));
+    parentRecords.push(buildShakeWalletOption(parentDraft, normalizedDomain));
   }
 
   if (effectiveMode === 'delegated' || effectiveMode === 'hns-inline') {

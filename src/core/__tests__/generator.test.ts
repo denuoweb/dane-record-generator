@@ -190,14 +190,18 @@ describe('bootstrap generator', () => {
     });
 
     expect(result.parentRecords.some((line) => line.value.startsWith('GLUE4 ns1.example.'))).toBe(true);
-    const walletUiOptions = result.parentRecords.find((line) => line.value.includes('Bob Wallet desktop UI'));
-    expect(walletUiOptions?.value).toContain('Shake Wallet / LearnHNS browser wallet UI');
-    expect(walletUiOptions?.value).toContain('GLUE4: ns=ns1.example. address=203.0.113.10');
-    expect(walletUiOptions?.value).toContain('const tx = await wallet.sendUpdate("example", [');
-    expect(walletUiOptions?.value).toContain('"type": "GLUE4"');
     const walletCommand = result.parentRecords.find((line) => line.value.includes('hsw-cli rpc sendupdate'));
+    expect(walletCommand?.presentation?.tabId).toBe('cli');
+    expect(walletCommand?.presentation?.defaultSelected).toBe(true);
     expect(walletCommand?.value).toContain(`hsw-cli rpc sendupdate 'example' '{"records":[{"type":"GLUE4","ns":"ns1.example.","address":"203.0.113.10"}]}'`);
     expect(walletCommand?.value).toContain(`hsd-cli rpc getnameresource 'example'`);
+    const bobOption = result.parentRecords.find((line) => line.presentation?.tabId === 'bob');
+    expect(bobOption?.value).toContain('Bob Wallet desktop UI');
+    expect(bobOption?.value).toContain('GLUE4: ns=ns1.example. address=203.0.113.10');
+    const shakeOption = result.parentRecords.find((line) => line.presentation?.tabId === 'shake');
+    expect(shakeOption?.value).toContain('Shake Wallet / LearnHNS browser wallet UI');
+    expect(shakeOption?.value).toContain('const tx = await wallet.sendUpdate("example", [');
+    expect(shakeOption?.value).toContain('"type": "GLUE4"');
     expect(result.authoritativeRecords.some((line) => line.value.includes(' IN A 203.0.113.20'))).toBe(true);
     expect(result.authoritativeRecords.some((line) => line.value.includes(' IN TLSA 3 1 1 '))).toBe(true);
     expect(result.webServerNotes.some((line) => line.value.includes('current and next TLSA'))).toBe(true);
@@ -310,12 +314,18 @@ describe('bootstrap generator', () => {
       protocol: 'tcp'
     });
 
+    expect(result.parentRecords.find((line) => line.value === 'GLUE4 <nameserver-host> <nameserver-ipv4>')).toBeDefined();
+    const dsIndex = result.parentRecords.findIndex((line) => line.value.startsWith('DS '));
+    const referralIndex = result.parentRecords.findIndex((line) => line.value.startsWith('GLUE4 '));
+    expect(referralIndex).toBeGreaterThanOrEqual(0);
+    expect(dsIndex).toBeGreaterThan(referralIndex);
     const walletCommand = result.parentRecords.find((line) => line.value.includes('hsw-cli rpc sendupdate'));
     expect(walletCommand?.value).toContain('<resource-json-from-concrete-parent-records>');
     expect(walletCommand?.value).not.toContain('{"records":[]}');
-    const walletUiOptions = result.parentRecords.find((line) => line.value.includes('Bob Wallet desktop UI'));
-    expect(walletUiOptions?.value).toContain('Do not submit an empty name resource');
-    expect(walletUiOptions?.value).not.toContain('sendUpdate("example", [])');
+    const bobOption = result.parentRecords.find((line) => line.presentation?.tabId === 'bob');
+    expect(bobOption?.value).toContain('Do not submit an empty name resource');
+    const shakeOption = result.parentRecords.find((line) => line.presentation?.tabId === 'shake');
+    expect(shakeOption?.value).not.toContain('sendUpdate("example", [])');
   });
 
   it('keeps website IP hints technically distinct from A and AAAA records', async () => {

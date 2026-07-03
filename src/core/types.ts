@@ -5,6 +5,7 @@ export type DnsServerPreset = 'generic-zone' | 'hosted-dns' | 'powerdns' | 'knot
 export type CheckStatus = 'ok' | 'warn' | 'missing';
 export type Severity = 'info' | 'warning' | 'error';
 export type OutputAudience = 'parent' | 'authoritative' | 'server' | 'web' | 'verify' | 'integrator';
+export type HnsWalletOptionId = 'cli' | 'bob' | 'shake';
 
 export interface BootstrapInput {
   domainType: DomainType;
@@ -30,6 +31,12 @@ export interface BootstrapInput {
 export interface GeneratedLine {
   value: string;
   explanation: string;
+  presentation?: {
+    kind: 'hns-wallet-option';
+    tabId: HnsWalletOptionId;
+    tabLabel: string;
+    defaultSelected?: boolean;
+  };
 }
 
 export interface StatusCheck {
