@@ -259,6 +259,64 @@ function buildHnsWalletCommand(parentDraft: HnsParentRecordDraft[], domain: stri
   };
 }
 
+function formatHnsRecordForUi(record: HnsParentRecordDraft): string {
+  switch (record.type) {
+    case 'GLUE4':
+    case 'GLUE6':
+      return `${record.type}: ns=${record.ns ?? '<nameserver>'} address=${record.address ?? '<address>'}`;
+    case 'NS':
+      return `NS: ns=${record.ns ?? '<nameserver>'}`;
+    case 'SYNTH4':
+    case 'SYNTH6':
+      return `${record.type}: address=${record.address ?? '<address>'}`;
+    case 'DS':
+      return `DS: keyTag=${record.keyTag ?? '<keytag>'} algorithm=${record.algorithm ?? '<algorithm>'} digestType=${record.digestType ?? '<digest-type>'} digest=${record.digest ?? '<digest>'}`;
+    default:
+      return `Record: ${JSON.stringify(record)}`;
+  }
+}
+
+function buildShakeWalletExample(parentDraft: HnsParentRecordDraft[], domain: string): string[] {
+  if (parentDraft.length === 0) return [];
+  const name = JSON.stringify(rootless(domain));
+  const records = JSON.stringify(parentDraft, null, 2);
+
+  return [
+    '',
+    'Shake Wallet dapp/API equivalent:',
+    'const wallet = await shake.connect();',
+    `const tx = await wallet.sendUpdate(${name}, ${records});`
+  ];
+}
+
+function buildHnsWalletUiOptions(parentDraft: HnsParentRecordDraft[], domain: string): GeneratedLine {
+  const name = rootless(domain);
+  const recordLines = parentDraft.length > 0
+    ? parentDraft.map((record) => `- ${formatHnsRecordForUi(record)}`)
+    : ['- Fill in concrete NS, GLUE, SYNTH, or DS records first. Do not submit an empty name resource unless you mean to clear existing records.'];
+
+  return {
+    value: [
+      'Bob Wallet desktop UI:',
+      `1. Open Bob Wallet and let the node/wallet sync for ${name}.`,
+      '2. Open Name Management / Domains, select the name, then open DNS records.',
+      '3. Add the concrete HNS parent records below, confirm the wallet prompt, and wait for confirmation plus the tree interval.',
+      '',
+      'Shake Wallet / LearnHNS browser wallet UI:',
+      `1. Open the extension and unlock the wallet that owns ${name}.`,
+      '2. Select the name, open the on-chain records/update view, and add the same concrete records.',
+      '3. Confirm the update popup before broadcasting.',
+      '',
+      'Concrete parent records to enter:',
+      ...recordLines,
+      ...buildShakeWalletExample(parentDraft, domain)
+    ].join('\n'),
+    explanation: parentDraft.length > 0
+      ? 'Bob Wallet and Shake Wallet can update the same HNS name resource through their UI. Use the concrete parent records shown here and confirm the wallet prompt before broadcasting.'
+      : 'Fill in concrete NS, GLUE, SYNTH, or DS records before using a wallet UI. Do not submit an empty name resource unless you mean to clear existing records.'
+  };
+}
+
 function buildSections(result: Omit<BootstrapResult, 'sections'>): OutputSection[] {
   const sections: OutputSection[] = [
     { id: 'steps', title: 'Do these steps', audience: 'verify', lines: result.quickSteps, compact: true },
@@ -382,6 +440,7 @@ export async function generateBootstrap(input: BootstrapInput): Promise<Bootstra
   }
 
   if (input.domainType === 'hns') {
+    parentRecords.push(buildHnsWalletUiOptions(parentDraft, normalizedDomain));
     parentRecords.push(buildHnsWalletCommand(parentDraft, normalizedDomain));
   }
 

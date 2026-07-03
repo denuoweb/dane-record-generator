@@ -156,6 +156,8 @@ const explanationsEn = {
   dsPlaceholder: 'Placeholder: paste your authoritative-zone DNSKEY to generate the exact parent-side DS record.',
   hnsWalletCommands: 'hsw-cli creates or broadcasts the HNS name UPDATE from the wallet. hsd-cli checks the name resource after confirmation and the tree interval.',
   hnsWalletCommandsPlaceholder: 'Fill in concrete NS, GLUE, SYNTH, or DS records before broadcasting an HNS name UPDATE. Do not send an empty records array unless you mean to clear the name resource.',
+  hnsWalletUiOptions: 'Bob Wallet and Shake Wallet can update the same HNS name resource through their UI. Use the concrete parent records shown here and confirm the wallet prompt before broadcasting.',
+  hnsWalletUiOptionsPlaceholder: 'Fill in concrete NS, GLUE, SYNTH, or DS records before using a wallet UI. Do not submit an empty name resource unless you mean to clear existing records.',
   registrarNs: 'Registrar-side nameserver delegation.',
   registrarGlue4: 'Registrar-side glue is needed because the nameserver is inside the delegated domain.',
   registrarGlue6: 'Registrar-side IPv6 glue is needed because the nameserver is inside the delegated domain.',
