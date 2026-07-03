@@ -43,8 +43,8 @@ const GUIDANCE: Record<string, HandoffGuidance> = {
   'synth-setup': {
     badge: 'HNScrawler handoff',
     title: 'Complete SYNTH nameserver setup',
-    body: 'HNScrawler found SYNTH nameserver bootstrap. The website address and TLSA still belong on the authoritative DNS server.',
-    next: ['Confirm SYNTH nameserver IPs.', 'Add website A or AAAA records to authoritative DNS.', 'Add DNSSEC and TLSA when ready.']
+    body: 'HNScrawler found SYNTH nameserver bootstrap. Website A/AAAA records and TLSA records still belong on the authoritative DNS server.',
+    next: ['Confirm SYNTH nameserver IPs.', 'Add website A/AAAA records to authoritative DNS.', 'Add DNSSEC and TLSA when ready.']
   },
   'dnssec-dane': {
     badge: 'HNScrawler handoff',

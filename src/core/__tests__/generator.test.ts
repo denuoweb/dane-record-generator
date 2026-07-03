@@ -278,4 +278,32 @@ describe('bootstrap generator', () => {
     expect(result.statusChecks.find((item) => item.label === 'DS')?.status).toBe('missing');
     expect(result.statusChecks.find((item) => item.label === 'TLSA')?.status).toBe('missing');
   });
+
+  it('keeps website IP hints technically distinct from A and AAAA records', async () => {
+    const missingWebsiteIp = await generateBootstrap({
+      domainType: 'hns',
+      setupMode: 'delegated',
+      domainInput: 'example/',
+      nameserverHost: 'ns1.example.',
+      nameserverIpv4: '203.0.113.10',
+      port: 443,
+      protocol: 'tcp'
+    });
+
+    expect(missingWebsiteIp.notices.some((item) => item.message === 'No website IPv4 or IPv6 address was supplied.')).toBe(true);
+    expect(missingWebsiteIp.notices.some((item) => item.message.includes('A or AAAA address'))).toBe(false);
+
+    const withWebsiteIp = await generateBootstrap({
+      domainType: 'hns',
+      setupMode: 'delegated',
+      domainInput: 'example/',
+      nameserverHost: 'ns1.example.',
+      nameserverIpv4: '203.0.113.10',
+      websiteIpv4: '203.0.113.20',
+      port: 443,
+      protocol: 'tcp'
+    });
+
+    expect(withWebsiteIp.statusChecks.find((item) => item.label === 'Website IP')?.detail).toBe('Website A/AAAA records can be generated.');
+  });
 });

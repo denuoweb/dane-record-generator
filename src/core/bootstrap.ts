@@ -69,7 +69,7 @@ function validateInputs(input: BootstrapInput, domain: string): BootstrapNotice[
     notices.push(notice('error', 'HNS SYNTH mode needs at least one nameserver IP address.'));
   }
 
-  if (!nonEmpty(input.websiteIpv4) && !nonEmpty(input.websiteIpv6)) notices.push(notice('error', 'No website A or AAAA address was supplied.'));
+  if (!nonEmpty(input.websiteIpv4) && !nonEmpty(input.websiteIpv6)) notices.push(notice('error', 'No website IPv4 or IPv6 address was supplied.'));
 
   if (input.setupMode === 'delegated' && nonEmpty(input.nameserverHost) && isInBailiwick(input.nameserverHost, domain) && !nonEmpty(input.nameserverIpv4) && !nonEmpty(input.nameserverIpv6)) {
     notices.push(notice('error', 'The nameserver is inside the same zone, so glue is required. Add at least one nameserver IP address.'));
@@ -112,7 +112,7 @@ function defaultHelpTips(domainType: BootstrapInput['domainType'], setupMode: Bo
   }
 
   if (setupMode === 'hns-inline') {
-    tips.push('HNS SYNTH mode stores nameserver IPs in the HNS resource. Website A/AAAA and TLSA records still live on the authoritative DNS server.');
+    tips.push('HNS SYNTH mode stores nameserver IPs in the HNS resource. Website A/AAAA records and TLSA records still live on the authoritative DNS server.');
   }
 
   return tips;
@@ -121,7 +121,7 @@ function defaultHelpTips(domainType: BootstrapInput['domainType'], setupMode: Bo
 function buildQuickSteps(input: BootstrapInput, effectiveMode: BootstrapInput['setupMode'], hasDs: boolean, hasTlsa: boolean): GeneratedLine[] {
   if (effectiveMode === 'hns-inline') {
     return [
-      { value: '1. Put the server records on the authoritative DNS server.', explanation: 'SYNTH points resolvers to nameserver IPs; the zone still serves A/AAAA/TLSA.' },
+      { value: '1. Put the server records on the authoritative DNS server.', explanation: 'SYNTH points resolvers to nameserver IPs; the zone still serves website A/AAAA records and TLSA records.' },
       { value: '2. Enable DNSSEC signing on the zone.', explanation: 'The DNS server should manage the signing keys and signed zone.' },
       { value: hasDs ? '3. Send SYNTH and DS records to the HNS wallet.' : '3. Paste the DNSKEY here, then send SYNTH and DS records to the HNS wallet.', explanation: 'SYNTH is the parent-side referral; DS connects DNSSEC to the signed zone.' },
       { value: hasTlsa ? '4. Serve the matching HTTPS certificate/key.' : '4. Paste the leaf certificate or PUBLIC KEY to generate TLSA.', explanation: 'TLSA goes on the authoritative DNS server.' }
@@ -140,7 +140,7 @@ function buildQuickSteps(input: BootstrapInput, effectiveMode: BootstrapInput['s
 function buildStatusChecks(input: BootstrapInput, effectiveMode: BootstrapInput['setupMode'], inBailiwickNameserver: boolean, hasDs: boolean, hasTlsa: boolean): StatusCheck[] {
   const checks: StatusCheck[] = [
     check('Domain', input.domainInput.trim() ? 'ok' : 'missing', input.domainInput.trim() ? 'Domain is normalized for DNS output.' : 'Enter the HNS name or ICANN domain.'),
-    check('Website IP', nonEmpty(input.websiteIpv4) || nonEmpty(input.websiteIpv6) ? 'ok' : 'missing', nonEmpty(input.websiteIpv4) || nonEmpty(input.websiteIpv6) ? 'A/AAAA output can be generated.' : 'Add at least one website IPv4 or IPv6 address.')
+    check('Website IP', nonEmpty(input.websiteIpv4) || nonEmpty(input.websiteIpv6) ? 'ok' : 'missing', nonEmpty(input.websiteIpv4) || nonEmpty(input.websiteIpv6) ? 'Website A/AAAA records can be generated.' : 'Add at least one website IPv4 or IPv6 address.')
   ];
 
   if (effectiveMode === 'hns-inline') {
