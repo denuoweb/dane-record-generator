@@ -542,6 +542,8 @@ export async function generateBootstrap(input: BootstrapInput): Promise<Bootstra
       domain: normalizedDomain,
       nameserverHost: ns,
       nameserverHosts: authoritativeNsHosts,
+      ...(input.nameserverIpv4 !== undefined ? { nameserverIpv4: input.nameserverIpv4 } : {}),
+      ...(input.nameserverIpv6 !== undefined ? { nameserverIpv6: input.nameserverIpv6 } : {}),
       ttl,
       tlsaOwner: owner,
       ...(input.websiteIpv4 !== undefined ? { websiteIpv4: input.websiteIpv4 } : {}),

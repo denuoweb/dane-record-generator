@@ -22,14 +22,14 @@ export const localeText = {
       domainType: 'Domain type',
       domainTypeHelp: 'HNS means wallet/name resource. ICANN means registrar panel.',
       setupMode: 'Setup mode',
-      setupModeHelp: 'Named mode uses a nameserver hostname. SYNTH mode stores nameserver IPs in HNS; both still use authoritative DNS.',
+      setupModeHelp: 'Delegated mode points at a nameserver hostname. SYNTH stores nameserver IPs in HNS; both still need signed authoritative DNS.',
       domain: 'Domain',
       domainHelp: 'Examples: dane/ or example.com',
       hnsDomainHelp: 'HNS names must end with / and use one lowercase ASCII name: a-z, 0-9, - or _, with - and _ only in the middle.',
       dnsServerPreset: 'DNS server preset',
       dnsServerPresetHelp: 'This changes the copy-paste server example, not the DNS meaning.',
       nameserverHost: 'Nameserver hostname',
-      nameserverHostHelp: 'Use ns1.yourname. if this server belongs under the same name. That requires glue.',
+      nameserverHostHelp: 'Use provider nameservers, or use ns1.yourname. with glue if the nameserver lives under the same name.',
       nameserverIpv4: 'Nameserver IPv4',
       nameserverIpv4Help: 'Required for HNS SYNTH and in-zone delegated nameservers; optional for external delegated nameservers.',
       nameserverIpv6: 'Nameserver IPv6 (optional)',
@@ -47,7 +47,7 @@ export const localeText = {
     },
     options: {
       hns: 'Handshake / HNS',
-      icann: 'ICANN / normal DNS',
+      icann: 'ICANN / DNS',
       delegated: 'Delegated authoritative DNS',
       hnsInline: 'HNS SYNTH nameserver',
       genericZone: 'Generic zone file',
@@ -55,6 +55,7 @@ export const localeText = {
       powerdns: 'PowerDNS Authoritative',
       knot: 'Knot DNS',
       bind: 'BIND 9',
+      windowsServer: 'Windows Server DNS',
       nsd: 'NSD'
     },
     howTo: {
@@ -122,9 +123,9 @@ export const localeText = {
     faq: {
       title: 'Help tips',
       setupModeSummary: 'Which setup mode should I use?',
-      setupModeBody: 'Use Delegated authoritative DNS when the wallet or registrar should point at a nameserver hostname. Use HNS SYNTH nameserver only for HNS names when the HNS resource should store nameserver IPs directly. SYNTH is a nameserver referral; website A/AAAA and TLSA records still live on the authoritative DNS server.',
+      setupModeBody: 'Use Delegated authoritative DNS for the DANE setup path: create or choose an authoritative DNS zone, put its nameserver hostname in the wallet or registrar, add glue if that hostname is under the same name, enable DNSSEC, publish the DS at the parent, and publish A/AAAA plus TLSA in the signed zone. Use HNS SYNTH only when an HNS name should store the authoritative nameserver IP directly; SYNTH is still just the HNS nameserver referral for the same signed DANE zone.',
       domainSummary: 'What domain format should I enter?',
-      domainBody: 'For HNS, enter one lowercase name ending in /, for example dane/. Do not include child labels such as www.dane/ or any internal /. For ICANN, enter the normal DNS name, for example example.com.',
+      domainBody: 'For HNS, enter one lowercase name ending in /, for example dane/. Do not include child labels such as www.dane/ or any internal /. For ICANN, enter the DNS domain name, for example example.com.',
       presetSummary: 'Which preset should I pick?',
       presetBody: 'Use Hosted DNS if your provider supports DNSSEC and TLSA records. Use Generic zone file when you are adapting records into BIND, Knot, NSD, or another server. Use PowerDNS when you want database or API-backed DNS.',
       splitSummary: 'What goes in the wallet versus the DNS server?',
@@ -138,7 +139,7 @@ export const localeText = {
       idnSummary: 'Can I use an internationalized domain name?',
       idnBody: 'Yes. Unicode domain input is converted to IDNA ASCII A-labels such as xn--bcher-kva.example. Use the A-label form in DNS records, wallet fields, registrar fields, and server configs.',
       hostedSummary: 'What must a hosted DNS provider support?',
-      hostedBody: 'The provider needs authoritative DNS hosting, DNSSEC signing, DS or DNSKEY export, custom TLSA records, signature refresh, authenticated denial records, and enough diagnostics to confirm DNSSEC validation.'
+      hostedBody: 'The provider needs authoritative DNS hosting, DNSSEC signing, DS or DNSKEY export, custom TLSA records, signature refresh, authenticated denial records, and enough diagnostics to confirm DNSSEC validation. If a provider cannot publish TLSA in a signed zone, it cannot complete this DANE path.'
     }
   },
   es: {
@@ -160,14 +161,14 @@ export const localeText = {
       domainType: 'Tipo de dominio',
       domainTypeHelp: 'HNS significa cartera/recurso de nombre. ICANN significa panel del registrador.',
       setupMode: 'Modo de configuración',
-      setupModeHelp: 'El modo con nombre usa un hostname de nameserver. SYNTH guarda IPs de nameserver en HNS; ambos usan DNS autoritativo.',
+      setupModeHelp: 'El modo delegado apunta a un hostname de nameserver. SYNTH guarda IPs en HNS; ambos necesitan DNS autoritativo firmado.',
       domain: 'Dominio',
       domainHelp: 'Ejemplos: dane/ o example.com',
       hnsDomainHelp: 'Los nombres HNS deben terminar en / y usar un solo nombre ASCII en minúsculas: a-z, 0-9, - o _, con - y _ solo en medio.',
       dnsServerPreset: 'Plantilla de servidor DNS',
       dnsServerPresetHelp: 'Cambia el ejemplo para copiar y pegar, no el significado DNS.',
       nameserverHost: 'Nombre del servidor DNS',
-      nameserverHostHelp: 'Usa ns1.tunombre. si este servidor está dentro del mismo nombre. Eso requiere glue.',
+      nameserverHostHelp: 'Usa nameservers del proveedor, o ns1.tunombre. con glue si el nameserver vive bajo el mismo nombre.',
       nameserverIpv4: 'IPv4 del servidor DNS',
       nameserverIpv4Help: 'Obligatoria para SYNTH HNS y nameservers delegados dentro de la zona; opcional para nameservers delegados externos.',
       nameserverIpv6: 'IPv6 del servidor DNS (opcional)',
@@ -185,7 +186,7 @@ export const localeText = {
     },
     options: {
       hns: 'Handshake / HNS',
-      icann: 'ICANN / DNS normal',
+      icann: 'ICANN / DNS',
       delegated: 'DNS autoritativo delegado',
       hnsInline: 'Nameserver SYNTH HNS',
       genericZone: 'Archivo de zona genérico',
@@ -193,6 +194,7 @@ export const localeText = {
       powerdns: 'PowerDNS Authoritative',
       knot: 'Knot DNS',
       bind: 'BIND 9',
+      windowsServer: 'Windows Server DNS',
       nsd: 'NSD'
     },
     howTo: {
@@ -238,9 +240,9 @@ export const localeText = {
     faq: {
       title: 'Ayuda',
       setupModeSummary: '¿Qué modo de configuración debería usar?',
-      setupModeBody: 'Usa DNS autoritativo delegado cuando la cartera o registrador debe apuntar a un hostname de nameserver. Usa nameserver SYNTH HNS solo para nombres HNS cuando el recurso HNS debe guardar directamente las IPs del nameserver. SYNTH es una referencia al nameserver; los registros A/AAAA del sitio y TLSA siguen en el servidor DNS autoritativo.',
+      setupModeBody: 'Usa DNS autoritativo delegado para la ruta DANE: crea o elige una zona DNS autoritativa, pon su hostname de nameserver en la cartera o registrador, añade glue si ese hostname está bajo el mismo nombre, activa DNSSEC, publica DS en el padre y publica A/AAAA más TLSA en la zona firmada. Usa HNS SYNTH solo cuando un nombre HNS deba guardar directamente la IP del nameserver autoritativo; SYNTH sigue siendo solo la referencia HNS al nameserver para la misma zona DANE firmada.',
       domainSummary: '¿Qué formato de dominio debo introducir?',
-      domainBody: 'Para HNS, introduce un solo nombre en minúsculas que termine en /, por ejemplo dane/. No incluyas etiquetas hijas como www.dane/ ni ningún / interno. Para ICANN, introduce el nombre DNS normal, por ejemplo example.com.',
+      domainBody: 'Para HNS, introduce un solo nombre en minúsculas que termine en /, por ejemplo dane/. No incluyas etiquetas hijas como www.dane/ ni ningún / interno. Para ICANN, introduce el nombre de dominio DNS, por ejemplo example.com.',
       presetSummary: '¿Qué plantilla debería elegir?',
       presetBody: 'Usa DNS alojado si tu proveedor admite DNSSEC y registros TLSA. Usa archivo de zona genérico si adaptarás registros a BIND, Knot, NSD u otro servidor. Usa PowerDNS si quieres DNS con base de datos o API.',
       splitSummary: '¿Qué va en la cartera o registrador frente al servidor DNS?',
@@ -254,7 +256,7 @@ export const localeText = {
       idnSummary: '¿Puedo usar un dominio internacionalizado?',
       idnBody: 'Sí. La entrada Unicode se convierte a etiquetas ASCII IDNA como xn--bcher-kva.example. Usa la forma A-label en registros DNS, cartera, registrador y configs del servidor.',
       hostedSummary: '¿Qué debe admitir un proveedor DNS alojado?',
-      hostedBody: 'El proveedor necesita DNS autoritativo, firma DNSSEC, exportación de DS o DNSKEY y registros TLSA personalizados. Si falta algo, usa una plantilla para tu propio servidor autoritativo.'
+      hostedBody: 'El proveedor necesita DNS autoritativo, firma DNSSEC, exportación de DS o DNSKEY y registros TLSA personalizados. Si no puede publicar TLSA en una zona firmada, no puede completar esta ruta DANE.'
     }
   },
   fr: {
@@ -276,14 +278,14 @@ export const localeText = {
       domainType: 'Type de domaine',
       domainTypeHelp: 'HNS signifie wallet/ressource de nom. ICANN signifie panneau du bureau d’enregistrement.',
       setupMode: 'Mode de configuration',
-      setupModeHelp: 'Le mode nommé utilise un nom de serveur. Le mode SYNTH stocke les IPs des serveurs de noms dans HNS; les deux utilisent un DNS faisant autorité.',
+      setupModeHelp: 'Le mode délégué pointe vers un nom de serveur. SYNTH stocke les IPs dans HNS; les deux exigent un DNS signé.',
       domain: 'Domaine',
       domainHelp: 'Exemples : dane/ ou example.com',
       hnsDomainHelp: 'Les noms HNS doivent finir par / et utiliser un seul nom ASCII minuscule : a-z, 0-9, - ou _, avec - et _ seulement au milieu.',
       dnsServerPreset: 'Modèle de serveur DNS',
       dnsServerPresetHelp: 'Cela change l’exemple à copier-coller, pas le sens DNS.',
       nameserverHost: 'Nom du serveur de noms',
-      nameserverHostHelp: 'Utilisez ns1.votrenom. si ce serveur est sous le même nom. Cela nécessite de la glue.',
+      nameserverHostHelp: 'Utilisez les serveurs du fournisseur, ou ns1.votrenom. avec glue si le serveur est sous le même nom.',
       nameserverIpv4: 'IPv4 du serveur de noms',
       nameserverIpv4Help: 'Requise pour SYNTH HNS et les serveurs de noms délégués dans la zone ; facultative pour les serveurs de noms délégués externes.',
       nameserverIpv6: 'IPv6 du serveur de noms (facultatif)',
@@ -301,7 +303,7 @@ export const localeText = {
     },
     options: {
       hns: 'Handshake / HNS',
-      icann: 'ICANN / DNS normal',
+      icann: 'ICANN / DNS',
       delegated: 'DNS faisant autorité délégué',
       hnsInline: 'Nameserver SYNTH HNS',
       genericZone: 'Fichier de zone générique',
@@ -309,6 +311,7 @@ export const localeText = {
       powerdns: 'PowerDNS Authoritative',
       knot: 'Knot DNS',
       bind: 'BIND 9',
+      windowsServer: 'Windows Server DNS',
       nsd: 'NSD'
     },
     howTo: {
@@ -354,9 +357,9 @@ export const localeText = {
     faq: {
       title: 'Aide',
       setupModeSummary: 'Quel mode de configuration choisir ?',
-      setupModeBody: 'Utilisez DNS faisant autorité délégué lorsque le wallet ou le bureau d’enregistrement doit pointer vers un nom de serveur de noms. Utilisez le nameserver SYNTH HNS seulement pour les noms HNS lorsque la ressource HNS doit stocker directement les IPs du serveur de noms. SYNTH est une référence de serveur de noms ; les enregistrements A/AAAA du site et TLSA restent sur le serveur DNS faisant autorité.',
+      setupModeBody: 'Utilisez le DNS faisant autorité délégué pour le chemin DANE : créez ou choisissez une zone DNS faisant autorité, mettez son nom de serveur dans le wallet ou chez le registrar, ajoutez de la glue si ce nom est sous le même domaine, activez DNSSEC, publiez le DS chez le parent, puis publiez A/AAAA et TLSA dans la zone signée. Utilisez HNS SYNTH seulement lorsqu’un nom HNS doit stocker directement l’IP du serveur faisant autorité ; SYNTH reste seulement la référence HNS de serveur de noms pour la même zone DANE signée.',
       domainSummary: 'Quel format de domaine saisir ?',
-      domainBody: 'Pour HNS, saisissez un seul nom minuscule se terminant par /, par exemple dane/. N’incluez pas de sous-labels comme www.dane/ ni de / interne. Pour ICANN, saisissez le nom DNS normal, par exemple example.com.',
+      domainBody: 'Pour HNS, saisissez un seul nom minuscule se terminant par /, par exemple dane/. N’incluez pas de sous-labels comme www.dane/ ni de / interne. Pour ICANN, saisissez le nom de domaine DNS, par exemple example.com.',
       presetSummary: 'Quel modèle choisir ?',
       presetBody: 'Utilisez DNS hébergé si votre fournisseur prend en charge DNSSEC et TLSA. Utilisez le fichier de zone générique pour adapter les enregistrements à BIND, Knot, NSD ou un autre serveur. Utilisez PowerDNS pour un DNS avec base de données ou API.',
       splitSummary: 'Que va dans le wallet ou le bureau d’enregistrement, et que va sur le serveur DNS ?',
@@ -370,7 +373,7 @@ export const localeText = {
       idnSummary: 'Puis-je utiliser un nom de domaine internationalisé ?',
       idnBody: 'Oui. Le domaine Unicode est converti en A-label ASCII IDNA comme xn--bcher-kva.example. Utilisez cette forme dans les enregistrements DNS, le wallet, le bureau d’enregistrement et les configs serveur.',
       hostedSummary: 'Que doit prendre en charge un fournisseur DNS hébergé ?',
-      hostedBody: 'Le fournisseur doit offrir DNS faisant autorité, signature DNSSEC, export DS ou DNSKEY, et enregistrements TLSA personnalisés. Sinon, utilisez votre propre serveur faisant autorité.'
+      hostedBody: 'Le fournisseur doit offrir DNS faisant autorité, signature DNSSEC, export DS ou DNSKEY, et enregistrements TLSA personnalisés. S’il ne peut pas publier TLSA dans une zone signée, il ne peut pas compléter ce chemin DANE.'
     }
   },
   de: {
@@ -392,14 +395,14 @@ export const localeText = {
       domainType: 'Domaintyp',
       domainTypeHelp: 'HNS bedeutet Wallet/Namensressource. ICANN bedeutet Registrar-Panel.',
       setupMode: 'Einrichtungsmodus',
-      setupModeHelp: 'Benannter Modus nutzt einen Nameserver-Hostnamen. SYNTH speichert Nameserver-IPs in HNS; beide nutzen autoritatives DNS.',
+      setupModeHelp: 'Delegierter Modus zeigt auf einen Nameserver-Hostnamen. SYNTH speichert IPs in HNS; beide brauchen signiertes DNS.',
       domain: 'Domain',
       domainHelp: 'Beispiele: dane/ oder example.com',
       hnsDomainHelp: 'HNS-Namen müssen mit / enden und einen einzelnen kleingeschriebenen ASCII-Namen verwenden: a-z, 0-9, - oder _, wobei - und _ nur in der Mitte stehen dürfen.',
       dnsServerPreset: 'DNS-Server-Vorlage',
       dnsServerPresetHelp: 'Ändert das Copy-Paste-Beispiel, nicht die DNS-Bedeutung.',
       nameserverHost: 'Nameserver-Hostname',
-      nameserverHostHelp: 'Nutzen Sie ns1.ihrname., wenn dieser Server unter demselben Namen liegt. Das erfordert Glue.',
+      nameserverHostHelp: 'Nutzen Sie Provider-Nameserver oder ns1.ihrname. mit Glue, wenn der Nameserver unter demselben Namen liegt.',
       nameserverIpv4: 'Nameserver IPv4',
       nameserverIpv4Help: 'Erforderlich für HNS SYNTH und delegierte Nameserver in der Zone; optional für externe delegierte Nameserver.',
       nameserverIpv6: 'Nameserver IPv6 (optional)',
@@ -417,7 +420,7 @@ export const localeText = {
     },
     options: {
       hns: 'Handshake / HNS',
-      icann: 'ICANN / normales DNS',
+      icann: 'ICANN / DNS',
       delegated: 'Delegiertes autoritatives DNS',
       hnsInline: 'HNS SYNTH-Nameserver',
       genericZone: 'Generische Zonendatei',
@@ -425,6 +428,7 @@ export const localeText = {
       powerdns: 'PowerDNS Authoritative',
       knot: 'Knot DNS',
       bind: 'BIND 9',
+      windowsServer: 'Windows Server DNS',
       nsd: 'NSD'
     },
     howTo: {
@@ -470,9 +474,9 @@ export const localeText = {
     faq: {
       title: 'Hilfen',
       setupModeSummary: 'Welchen Einrichtungsmodus soll ich verwenden?',
-      setupModeBody: 'Nutzen Sie delegiertes autoritatives DNS, wenn Wallet oder Registrar auf einen Nameserver-Hostnamen zeigen sollen. Nutzen Sie HNS SYNTH-Nameserver nur für HNS-Namen, wenn die HNS-Ressource Nameserver-IPs direkt speichern soll. SYNTH ist eine Nameserver-Verweisung; Website-A/AAAA- und TLSA-Einträge bleiben auf dem autoritativen DNS-Server.',
+      setupModeBody: 'Nutzen Sie delegiertes autoritatives DNS für den DANE-Weg: autoritative DNS-Zone erstellen oder wählen, deren Nameserver-Hostnamen in Wallet oder Registrar eintragen, Glue hinzufügen wenn der Hostname unter demselben Namen liegt, DNSSEC aktivieren, DS beim Parent veröffentlichen und A/AAAA plus TLSA in der signierten Zone veröffentlichen. Nutzen Sie HNS SYNTH nur, wenn ein HNS-Name die IP des autoritativen Nameservers direkt speichern soll; SYNTH bleibt nur die HNS-Nameserver-Verweisung für dieselbe signierte DANE-Zone.',
       domainSummary: 'Welches Domainformat soll ich eingeben?',
-      domainBody: 'Für HNS geben Sie einen einzelnen kleingeschriebenen Namen mit abschließendem / ein, zum Beispiel dane/. Verwenden Sie keine Child-Labels wie www.dane/ und kein internes /. Für ICANN geben Sie den normalen DNS-Namen ein, zum Beispiel example.com.',
+      domainBody: 'Für HNS geben Sie einen einzelnen kleingeschriebenen Namen mit abschließendem / ein, zum Beispiel dane/. Verwenden Sie keine Child-Labels wie www.dane/ und kein internes /. Für ICANN geben Sie den DNS-Namen ein, zum Beispiel example.com.',
       presetSummary: 'Welche Vorlage sollte ich wählen?',
       presetBody: 'Nutzen Sie Hosted DNS, wenn Ihr Provider DNSSEC und TLSA unterstützt. Nutzen Sie die generische Zonendatei für BIND, Knot, NSD oder andere Server. Nutzen Sie PowerDNS für datenbank- oder API-basiertes DNS.',
       splitSummary: 'Was gehört in Wallet/Registrar und was auf den DNS-Server?',
@@ -486,7 +490,7 @@ export const localeText = {
       idnSummary: 'Kann ich einen internationalisierten Domainnamen nutzen?',
       idnBody: 'Ja. Unicode-Domain-Eingaben werden in IDNA-ASCII-A-Labels wie xn--bcher-kva.example umgewandelt. Nutzen Sie die A-Label-Form in DNS, Wallet, Registrar und Serverkonfiguration.',
       hostedSummary: 'Was muss ein Hosted-DNS-Provider unterstützen?',
-      hostedBody: 'Der Provider braucht autoritatives DNS-Hosting, DNSSEC-Signierung, DS- oder DNSKEY-Export und benutzerdefinierte TLSA-Einträge. Fehlt etwas davon, nutzen Sie eine eigene autoritative Server-Vorlage.'
+      hostedBody: 'Der Provider braucht autoritatives DNS-Hosting, DNSSEC-Signierung, DS- oder DNSKEY-Export und benutzerdefinierte TLSA-Einträge. Wenn er TLSA nicht in einer signierten Zone veröffentlichen kann, kann er diesen DANE-Weg nicht abschließen.'
     }
   },
   pt: {
@@ -508,14 +512,14 @@ export const localeText = {
       domainType: 'Tipo de domínio',
       domainTypeHelp: 'HNS significa carteira/recurso de nome. ICANN significa painel do registrador.',
       setupMode: 'Modo de configuração',
-      setupModeHelp: 'Modo nomeado usa hostname de nameserver. SYNTH guarda IPs de nameserver no HNS; ambos usam DNS autoritativo.',
+      setupModeHelp: 'Modo delegado aponta para um hostname de nameserver. SYNTH guarda IPs no HNS; ambos precisam de DNS assinado.',
       domain: 'Domínio',
       domainHelp: 'Exemplos: dane/ ou example.com',
       hnsDomainHelp: 'Nomes HNS devem terminar com / e usar um unico nome ASCII minusculo: a-z, 0-9, - ou _, com - e _ apenas no meio.',
       dnsServerPreset: 'Preset de servidor DNS',
       dnsServerPresetHelp: 'Isso muda o exemplo de copiar e colar, não o significado DNS.',
       nameserverHost: 'Hostname do nameserver',
-      nameserverHostHelp: 'Use ns1.seunome. se este servidor estiver sob o mesmo nome. Isso requer glue.',
+      nameserverHostHelp: 'Use nameservers do provedor, ou ns1.seunome. com glue se o nameserver fica sob o mesmo nome.',
       nameserverIpv4: 'IPv4 do nameserver',
       nameserverIpv4Help: 'Obrigatório para SYNTH HNS e nameservers delegados dentro da zona; opcional para nameservers delegados externos.',
       nameserverIpv6: 'IPv6 do nameserver (opcional)',
@@ -533,7 +537,7 @@ export const localeText = {
     },
     options: {
       hns: 'Handshake / HNS',
-      icann: 'ICANN / DNS normal',
+      icann: 'ICANN / DNS',
       delegated: 'DNS autoritativo delegado',
       hnsInline: 'Nameserver SYNTH HNS',
       genericZone: 'Arquivo de zona genérico',
@@ -541,6 +545,7 @@ export const localeText = {
       powerdns: 'PowerDNS Authoritative',
       knot: 'Knot DNS',
       bind: 'BIND 9',
+      windowsServer: 'Windows Server DNS',
       nsd: 'NSD'
     },
     howTo: {
@@ -586,9 +591,9 @@ export const localeText = {
     faq: {
       title: 'Ajuda',
       setupModeSummary: 'Qual modo de configuração devo usar?',
-      setupModeBody: 'Use DNS autoritativo delegado quando a carteira ou registrador deve apontar para um hostname de nameserver. Use nameserver SYNTH HNS apenas para nomes HNS quando o recurso HNS deve armazenar IPs de nameserver diretamente. SYNTH é uma referência de nameserver; registros A/AAAA do site e TLSA continuam no servidor DNS autoritativo.',
+      setupModeBody: 'Use DNS autoritativo delegado para o caminho DANE: crie ou escolha uma zona DNS autoritativa, coloque o hostname do nameserver na carteira ou registrador, adicione glue se esse hostname fica sob o mesmo nome, ative DNSSEC, publique DS no parent e publique A/AAAA mais TLSA na zona assinada. Use HNS SYNTH apenas quando um nome HNS deve armazenar diretamente o IP do nameserver autoritativo; SYNTH ainda é só a referência HNS de nameserver para a mesma zona DANE assinada.',
       domainSummary: 'Qual formato de domínio devo informar?',
-      domainBody: 'Para HNS, informe um único nome em minúsculas terminando com /, por exemplo dane/. Não inclua labels filhas como www.dane/ nem qualquer / interno. Para ICANN, informe o nome DNS normal, por exemplo example.com.',
+      domainBody: 'Para HNS, informe um único nome em minúsculas terminando com /, por exemplo dane/. Não inclua labels filhas como www.dane/ nem qualquer / interno. Para ICANN, informe o nome de domínio DNS, por exemplo example.com.',
       presetSummary: 'Qual preset devo escolher?',
       presetBody: 'Use DNS hospedado se seu provedor suporta DNSSEC e TLSA. Use arquivo de zona genérico ao adaptar registros para BIND, Knot, NSD ou outro servidor. Use PowerDNS se quiser DNS com banco de dados ou API.',
       splitSummary: 'O que vai na carteira/registrador versus no servidor DNS?',
@@ -602,7 +607,7 @@ export const localeText = {
       idnSummary: 'Posso usar um domínio internacionalizado?',
       idnBody: 'Sim. Entrada Unicode é convertida para A-labels ASCII IDNA como xn--bcher-kva.example. Use a forma A-label em DNS, carteira, registrador e configs do servidor.',
       hostedSummary: 'O que um provedor DNS hospedado precisa suportar?',
-      hostedBody: 'O provedor precisa de DNS autoritativo, assinatura DNSSEC, exportação de DS ou DNSKEY e registros TLSA personalizados. Se faltar algo, use seu próprio preset de servidor autoritativo.'
+      hostedBody: 'O provedor precisa de DNS autoritativo, assinatura DNSSEC, exportação de DS ou DNSKEY e registros TLSA personalizados. Se não puder publicar TLSA em uma zona assinada, ele não completa este caminho DANE.'
     }
   },
   ja: {
@@ -624,14 +629,14 @@ export const localeText = {
       domainType: 'ドメイン種別',
       domainTypeHelp: 'HNS はウォレット/名前リソース、ICANN はレジストラ画面を意味します。',
       setupMode: '設定モード',
-      setupModeHelp: '名前付きモードはネームサーバー名を使います。SYNTH モードは HNS にネームサーバー IP を保存します。どちらも権威 DNS を使います。',
+      setupModeHelp: '委任モードはネームサーバー名を指します。SYNTH は HNS に IP を保存します。どちらも署名済み権威 DNS が必要です。',
       domain: 'ドメイン',
       domainHelp: '例: dane/ または example.com',
       hnsDomainHelp: 'HNS 名は / で終わり、1 つの小文字 ASCII 名だけを使います: a-z、0-9、-、_。- と _ は中間のみです。',
       dnsServerPreset: 'DNS サーバープリセット',
       dnsServerPresetHelp: 'コピー用のサーバー例だけを変えます。DNS の意味は変わりません。',
       nameserverHost: 'ネームサーバー名',
-      nameserverHostHelp: '同じ名前の下にあるサーバーなら ns1.yourname. を使います。その場合 glue が必要です。',
+      nameserverHostHelp: 'プロバイダーのネームサーバー、または同じ名前の下なら glue 付きで ns1.yourname. を使います。',
       nameserverIpv4: 'ネームサーバー IPv4',
       nameserverIpv4Help: 'HNS SYNTH とゾーン内の委任ネームサーバーでは必須です。外部の委任ネームサーバーでは任意です。',
       nameserverIpv6: 'ネームサーバー IPv6 (任意)',
@@ -649,7 +654,7 @@ export const localeText = {
     },
     options: {
       hns: 'Handshake / HNS',
-      icann: 'ICANN / 通常 DNS',
+      icann: 'ICANN / DNS',
       delegated: '委任された権威 DNS',
       hnsInline: 'HNS SYNTH ネームサーバー',
       genericZone: '汎用ゾーンファイル',
@@ -657,6 +662,7 @@ export const localeText = {
       powerdns: 'PowerDNS Authoritative',
       knot: 'Knot DNS',
       bind: 'BIND 9',
+      windowsServer: 'Windows Server DNS',
       nsd: 'NSD'
     },
     howTo: {
@@ -702,9 +708,9 @@ export const localeText = {
     faq: {
       title: 'ヘルプ',
       setupModeSummary: 'どの設定モードを使いますか?',
-      setupModeBody: 'ウォレットまたはレジストラがネームサーバー名を指す場合は、委任された権威 DNS を使います。HNS リソースにネームサーバー IP を直接保存したい HNS 名だけ、HNS SYNTH ネームサーバーを使います。SYNTH はネームサーバーへの参照です。サイトの A/AAAA と TLSA レコードは引き続き権威 DNS サーバーに置きます。',
+      setupModeBody: 'DANE 設定パスには委任された権威 DNS を使います。権威 DNS ゾーンを作成または選択し、そのネームサーバー名をウォレットまたはレジストラに入れ、同じ名前の下にある場合は glue を追加し、DNSSEC を有効化し、親側に DS を公開し、署名済みゾーンに A/AAAA と TLSA を公開します。HNS SYNTH は、HNS 名に権威ネームサーバー IP を直接保存したい場合だけ使います。SYNTH も同じ署名済み DANE ゾーンへの HNS ネームサーバー参照にすぎません。',
       domainSummary: 'どのドメイン形式を入力しますか?',
-      domainBody: 'HNS では、dane/ のように / で終わる 1 つの小文字名を入力します。www.dane/ のような子ラベルや内部の / は含めません。ICANN では example.com のような通常の DNS 名を入力します。',
+      domainBody: 'HNS では、dane/ のように / で終わる 1 つの小文字名を入力します。www.dane/ のような子ラベルや内部の / は含めません。ICANN では example.com のような DNS ドメイン名を入力します。',
       presetSummary: 'どのプリセットを選ぶべきですか?',
       presetBody: 'プロバイダーが DNSSEC と TLSA をサポートしているならホスト型 DNS を使います。BIND、Knot、NSD などへ合わせるなら汎用ゾーンファイルを使います。DB/API ベースの DNS なら PowerDNS を使います。',
       splitSummary: 'ウォレット/レジストラと DNS サーバーには何を入れますか?',
@@ -718,7 +724,7 @@ export const localeText = {
       idnSummary: '国際化ドメイン名は使えますか?',
       idnBody: 'はい。Unicode ドメイン入力は xn--bcher-kva.example のような IDNA ASCII A-label に変換されます。DNS レコード、ウォレット、レジストラ、サーバー設定では A-label 形式を使います。',
       hostedSummary: 'ホスト型 DNS プロバイダーに必要な機能は?',
-      hostedBody: '権威 DNS ホスティング、DNSSEC 署名、DS または DNSKEY のエクスポート、カスタム TLSA レコードが必要です。足りない場合は自前の権威サーバープリセットを使います。'
+      hostedBody: '権威 DNS ホスティング、DNSSEC 署名、DS または DNSKEY のエクスポート、カスタム TLSA レコードが必要です。署名済みゾーンに TLSA を公開できないプロバイダーでは、この DANE 経路は完了できません。'
     }
   }
 } as const;

@@ -17,7 +17,7 @@ export interface UrlPrefill {
   dnsServerPreset: DnsServerPreset;
 }
 
-const DNS_SERVER_PRESETS: DnsServerPreset[] = ['generic-zone', 'hosted-dns', 'powerdns', 'knot', 'bind', 'nsd'];
+const DNS_SERVER_PRESETS: DnsServerPreset[] = ['generic-zone', 'hosted-dns', 'powerdns', 'knot', 'bind', 'windows-server', 'nsd'];
 
 const DEFAULT_PREFILL: UrlPrefill = {
   hasPrefill: false,

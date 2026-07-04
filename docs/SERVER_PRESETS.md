@@ -2,7 +2,7 @@
 
 Presets are starter text, not a full DNS hosting system. The generated records remain the source of truth.
 
-Every preset assumes the operator will still handle normal authoritative-DNS operations:
+Every preset assumes the operator will still handle baseline authoritative-DNS operations:
 
 - Public UDP/53 and TCP/53 reachability.
 - Authoritative-only service with recursion disabled.
@@ -44,6 +44,12 @@ Knot can automate signing policy, but the operator still needs to monitor RRSIG 
 Useful when the admin is already on a standard Linux DNS stack or needs abundant documentation.
 
 For an authoritative-only BIND service, set recursion policy globally, not in the zone file alone. Keep recursion disabled for public authoritative listeners.
+
+## Windows Server DNS
+
+Useful when the admin already operates Windows Server and wants an elevated PowerShell path for installing DNS, disabling recursion, opening DNS firewall rules, creating records, and signing the zone.
+
+Use the generated PowerShell as a starter. After signing, publish the resulting DS at the HNS wallet or registrar and validate the DNSSEC chain from outside the server.
 
 ## NSD
 

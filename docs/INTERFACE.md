@@ -38,7 +38,9 @@ Fields:
 
 Help copy:
 
-> Named mode uses a nameserver hostname. SYNTH mode stores nameserver IPs in HNS. Both modes still use authoritative DNS for website and TLSA records.
+> Delegated authoritative DNS is the DANE setup path when the wallet or registrar should point at a nameserver hostname. SYNTH stores authoritative nameserver IPs in HNS. Both modes still need signed authoritative DNS for website and TLSA records.
+
+The setup-mode help should walk users through the delegated path: create or choose an authoritative DNS zone, point the wallet or registrar at its nameserver hostname, add glue if the hostname is inside the same name or zone, enable DNSSEC, publish DS at the parent, and keep website `A`/`AAAA` plus `TLSA` in the signed authoritative zone.
 
 Internationalized input:
 
@@ -49,6 +51,7 @@ Internationalized input:
 Fields:
 
 - DNS server preset
+- Inline Debian / Windows Server quick-start disclosure
 - Nameserver hostname
 - DNS server IP
 - Website IP
@@ -59,16 +62,21 @@ Help copy for HNS delegated mode:
 
 > If your nameserver is inside the same HNS name, such as `ns1.dane.` for `dane/`, your HNS wallet needs GLUE4 or GLUE6 so resolvers can find that nameserver.
 
+Nameserver-hostname guidance should distinguish provider-assigned nameservers from vanity/in-name nameservers. Provider nameservers normally need only an `NS` delegation. In-name nameservers such as `ns1.dane.` or `ns1.example.com.` need address records on the authoritative service and parent-side glue.
+
 Preset choices:
 
 - Hosted DNS provider panel
 - Generic zone file
+- BIND 9
+- Windows Server DNS
 - PowerDNS Authoritative
 - Knot DNS
-- BIND 9
 - NSD
 
 Preset output must remind self-hosting admins that authoritative service still needs UDP/TCP 53 reachability, recursion disabled, firewall access, SOA serial discipline, DNSSEC signature refresh, authenticated denial records, and validation after parent DS publication.
+
+The DNS server preset field should visibly link to Debian/BIND and Windows Server DNS quick starts before users generate output. The footer should also link to the web admin guide. The quick-start copy should explain that delegated authoritative DNS and HNS SYNTH use the same signed authoritative zone; only the parent-side referral changes.
 
 ## Compatibility Matrix
 

@@ -1,18 +1,26 @@
 import type { BootstrapInput, DnsServerPreset, GeneratedLine } from './types';
 import { relativeName, zoneNameWithoutRoot } from './domain';
 
-export const DNS_SERVER_PRESETS: DnsServerPreset[] = ['generic-zone', 'hosted-dns', 'bind', 'powerdns', 'knot', 'nsd'];
+export const DNS_SERVER_PRESETS: DnsServerPreset[] = ['generic-zone', 'hosted-dns', 'bind', 'windows-server', 'powerdns', 'knot', 'nsd'];
 
 export interface ServerPresetInput {
   preset: DnsServerPreset;
   domain: string;
   nameserverHost: string;
   nameserverHosts?: string[];
+  nameserverIpv4?: string;
+  nameserverIpv6?: string;
   ttl: number;
   websiteIpv4?: string;
   websiteIpv6?: string;
   tlsaRecord?: string;
   tlsaOwner: string;
+}
+
+interface NameserverAddressRecord {
+  name: string;
+  type: 'A' | 'AAAA';
+  address: string;
 }
 
 function tlsaRdata(input: ServerPresetInput): string {
@@ -21,6 +29,26 @@ function tlsaRdata(input: ServerPresetInput): string {
 
 function tlsaOwnerRelative(input: ServerPresetInput): string {
   return relativeName(input.tlsaOwner, input.domain);
+}
+
+function inZoneNameserverAddressRecordParts(input: ServerPresetInput): NameserverAddressRecord[] {
+  const nameservers = input.nameserverHosts?.length ? input.nameserverHosts : [input.nameserverHost];
+  return nameservers.flatMap((nameserver) => {
+    const name = relativeName(nameserver, input.domain);
+    if (name === '@' || name.endsWith('.')) return [];
+    return [
+      ...(input.nameserverIpv4 ? [{ name, type: 'A' as const, address: input.nameserverIpv4 }] : []),
+      ...(input.nameserverIpv6 ? [{ name, type: 'AAAA' as const, address: input.nameserverIpv6 }] : [])
+    ];
+  });
+}
+
+function inZoneNameserverAddressRecords(input: ServerPresetInput, prefix = ''): string[] {
+  return inZoneNameserverAddressRecordParts(input).map(({ name, type, address }) => `${prefix}${name} ${input.ttl} IN ${type} ${address}`);
+}
+
+function windowsTtl(input: ServerPresetInput): string {
+  return `(New-TimeSpan -Seconds ${input.ttl})`;
 }
 
 function operationalChecklist(prefix: '#' | ';' = '#'): string[] {
@@ -52,6 +80,7 @@ function makeZoneFile(input: ServerPresetInput): string {
     `  ${input.ttl}       ; minimum`,
     ')',
     ...nameservers.map((nameserver) => `@ ${input.ttl} IN NS ${nameserver}`),
+    ...inZoneNameserverAddressRecords(input),
     ...(input.websiteIpv4 ? [`@ ${input.ttl} IN A ${input.websiteIpv4}`] : []),
     ...(input.websiteIpv6 ? [`@ ${input.ttl} IN AAAA ${input.websiteIpv6}`] : []),
     `${tlsaOwnerRelative(input)} ${input.ttl} IN TLSA ${tlsaRdata(input)}`,
@@ -70,6 +99,9 @@ function hostedDnsPreset(input: ServerPresetInput): string {
     '# Create or edit the authoritative zone, then add these records.',
     `Zone: ${zoneNameWithoutRoot(input.domain)}`,
     ...nameservers.map((nameserver) => `NS    @                 ${nameserver}`),
+    ...inZoneNameserverAddressRecordParts(input).map(({ name, type, address }) => {
+      return `${type.padEnd(5)} ${name.padEnd(17)} ${address}`;
+    }),
     ...(input.websiteIpv4 ? [`A     @                 ${input.websiteIpv4}`] : []),
     ...(input.websiteIpv6 ? [`AAAA  @                 ${input.websiteIpv6}`] : []),
     `TLSA  ${tlsaOwnerRelative(input).padEnd(17)} ${tlsaRdata(input)}`,
@@ -98,6 +130,68 @@ function bindPreset(input: ServerPresetInput): string {
     makeZoneFile(input),
     '',
     '# After reload, inspect keys/DS with your BIND tooling and paste the DNSKEY/DS into the parent output.'
+  ].join('\n');
+}
+
+function windowsTlsaRecord(input: ServerPresetInput): string[] {
+  const [usage = '3', selector = '1', matchingType = '1', associationData = '<spki-sha256>'] = tlsaRdata(input).split(/\s+/);
+  const usageMap: Record<string, string> = {
+    '0': 'CAConstraint',
+    '1': 'ServiceCertificateConstraint',
+    '2': 'TrustAnchorAssertion',
+    '3': 'DomainIssuedCertificate'
+  };
+  const selectorMap: Record<string, string> = {
+    '0': 'FullCertificate',
+    '1': 'SubjectPublicKeyInfo'
+  };
+  const matchingTypeMap: Record<string, string> = {
+    '0': 'ExactMatch',
+    '1': 'Sha256Hash',
+    '2': 'Sha512Hash'
+  };
+
+  return [
+    `Add-DnsServerResourceRecord -TLSA -ZoneName "${zoneNameWithoutRoot(input.domain)}" -Name "${tlsaOwnerRelative(input)}" -CertificateUsage ${usageMap[usage] ?? 'DomainIssuedCertificate'} -Selector ${selectorMap[selector] ?? 'SubjectPublicKeyInfo'} -MatchingType ${matchingTypeMap[matchingType] ?? 'Sha256Hash'} -CertificateAssociationData "${associationData}" -TimeToLive ${windowsTtl(input)}`
+  ];
+}
+
+function windowsServerPreset(input: ServerPresetInput): string {
+  const zoneNoRoot = zoneNameWithoutRoot(input.domain);
+  const nameservers = input.nameserverHosts?.length ? input.nameserverHosts : [input.nameserverHost];
+
+  return [
+    '# Windows Server DNS PowerShell quick start',
+    '# Run in an elevated PowerShell session on the authoritative DNS server.',
+    'Install-WindowsFeature DNS -IncludeManagementTools',
+    'Set-DnsServerRecursion -Enable $false',
+    'New-NetFirewallRule -DisplayName "DNS UDP 53" -Direction Inbound -Protocol UDP -LocalPort 53 -Action Allow',
+    'New-NetFirewallRule -DisplayName "DNS TCP 53" -Direction Inbound -Protocol TCP -LocalPort 53 -Action Allow',
+    `Add-DnsServerPrimaryZone -Name "${zoneNoRoot}" -ZoneFile "${zoneNoRoot}.dns"`,
+    '',
+    '# Authoritative zone records',
+    ...nameservers.map((nameserver) => `Add-DnsServerResourceRecord -NS -ZoneName "${zoneNoRoot}" -Name "." -NameServer "${nameserver}" -TimeToLive ${windowsTtl(input)}`),
+    ...inZoneNameserverAddressRecordParts(input).map(({ name, type, address }) => {
+      const cmdlet = type === 'AAAA' ? 'Add-DnsServerResourceRecordAAAA' : 'Add-DnsServerResourceRecordA';
+      const addressParam = type === 'AAAA' ? 'IPv6Address' : 'IPv4Address';
+      return `${cmdlet} -ZoneName "${zoneNoRoot}" -Name "${name}" -${addressParam} "${address}" -TimeToLive ${windowsTtl(input)}`;
+    }),
+    ...(input.websiteIpv4 ? [`Add-DnsServerResourceRecordA -ZoneName "${zoneNoRoot}" -Name "." -IPv4Address "${input.websiteIpv4}" -TimeToLive ${windowsTtl(input)}`] : []),
+    ...(input.websiteIpv6 ? [`Add-DnsServerResourceRecordAAAA -ZoneName "${zoneNoRoot}" -Name "." -IPv6Address "${input.websiteIpv6}" -TimeToLive ${windowsTtl(input)}`] : []),
+    ...windowsTlsaRecord(input),
+    '',
+    '# If the delegated nameserver hostname is inside this zone, add its A/AAAA address too.',
+    '# Example: Add-DnsServerResourceRecordA -ZoneName "' + zoneNoRoot + '" -Name "ns1" -IPv4Address "<nameserver-ipv4>" -TimeToLive ' + windowsTtl(input),
+    '# HNS SYNTH mode does not need ns1 glue; the HNS parent stores the nameserver IP as SYNTH4/SYNTH6.',
+    '',
+    '# Sign the zone for DNSSEC, then publish the resulting DS at the HNS wallet or registrar.',
+    `Invoke-DnsServerZoneSign -ZoneName "${zoneNoRoot}" -SignWithDefault -PassThru -Verbose`,
+    `Get-DnsServerResourceRecord -ZoneName "${zoneNoRoot}" -RRType DNSKEY`,
+    `Get-DnsServerResourceRecord -ZoneName "${zoneNoRoot}" -RRType DS`,
+    '',
+    '# Verify from outside the server:',
+    `# dig @<windows-dns-server-ip> ${input.domain} SOA +dnssec +norecurse`,
+    `# dig @<windows-dns-server-ip> ${input.tlsaOwner} TLSA +dnssec +norecurse`
   ].join('\n');
 }
 
@@ -143,6 +237,9 @@ function powerDnsPreset(input: ServerPresetInput): string {
     '# PowerDNS Authoritative records',
     `Zone: ${zoneNoRoot}`,
     ...nameservers.map((nameserver) => `NS   @                 ${nameserver}`),
+    ...inZoneNameserverAddressRecordParts(input).map(({ name, type, address }) => {
+      return `${type.padEnd(4)} ${name.padEnd(17)} ${address}`;
+    }),
     ...(input.websiteIpv4 ? [`A    @                 ${input.websiteIpv4}`] : []),
     ...(input.websiteIpv6 ? [`AAAA @                 ${input.websiteIpv6}`] : []),
     `TLSA ${tlsaOwnerRelative(input).padEnd(17)} ${tlsaRdata(input)}`,
@@ -160,6 +257,7 @@ export function serverPresetLabel(preset: DnsServerPreset): string {
     case 'knot': return 'Knot DNS starter config';
     case 'nsd': return 'NSD starter config';
     case 'powerdns': return 'PowerDNS Authoritative records';
+    case 'windows-server': return 'Windows Server DNS PowerShell';
     default: return 'Generic zone-file records';
   }
 }
@@ -171,6 +269,7 @@ export function serverPresetTabLabel(preset: DnsServerPreset): string {
     case 'knot': return 'Knot';
     case 'nsd': return 'NSD';
     case 'powerdns': return 'PowerDNS';
+    case 'windows-server': return 'Windows Server';
     default: return 'Zone file';
   }
 }
@@ -183,6 +282,7 @@ export function generateServerPreset(input: ServerPresetInput): GeneratedLine[] 
       case 'knot': return knotPreset(input);
       case 'nsd': return nsdPreset(input);
       case 'powerdns': return powerDnsPreset(input);
+      case 'windows-server': return windowsServerPreset(input);
       default: return makeZoneFile(input);
     }
   })();
@@ -198,6 +298,7 @@ export function recommendedPresetTip(preset: BootstrapInput['dnsServerPreset']):
   if (preset === 'powerdns') return 'PowerDNS is a short path when you want an admin API or database-backed DNS.';
   if (preset === 'knot') return 'Knot DNS is a clean modern authoritative server with simple DNSSEC automation.';
   if (preset === 'bind') return 'BIND 9 is widely documented and package-manager friendly, but its config is more verbose.';
+  if (preset === 'windows-server') return 'Windows Server DNS can host and sign the authoritative zone with DNS Manager or PowerShell.';
   if (preset === 'nsd') return 'NSD is small and reliable, but DNSSEC signing is usually handled by a separate signing step.';
   return 'Generic zone-file output works with BIND, Knot, NSD, and many DNS hosting import tools.';
 }

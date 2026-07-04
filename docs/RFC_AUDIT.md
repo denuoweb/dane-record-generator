@@ -52,7 +52,7 @@ The app localizes the UI shell with a static translation table plus a result-loc
 2. Keep digest type as a typed option and avoid SHA-1 generation.
 3. Do not hard-code RSA assumptions. DNSSEC algorithm number is preserved from the DNSKEY input.
 4. Warn when a DNSKEY does not look like a normal KSK/SEP key, but do not block advanced users.
-5. Make HNS parent output separate from ICANN registrar output. HNS resource records are not normal registrar UI fields.
+5. Make HNS parent output separate from ICANN registrar output. HNS resource records are not ordinary registrar UI fields.
 6. Keep server presets small. DNS server installation and service management are OS-specific.
 7. Document authoritative-server hardening requirements without pretending to manage the OS, firewall, daemon, or secondary nameserver topology.
 8. Treat automated live validation as a future phase. The current scaffold emits validation commands but does not query resolvers itself.

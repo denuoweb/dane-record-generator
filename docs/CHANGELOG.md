@@ -9,6 +9,9 @@
 - Added generated web-server notes for TLSA current/next key rollover and DANE client-support limits.
 - Added authoritative-server operational checklists to server presets.
 - Added hosted DNS provider preset for web admins using a DNS host instead of running an authoritative daemon.
+- Added Windows Server DNS preset and Debian/Windows OS quick starts for delegated authoritative DANE and HNS SYNTH nameserver setup.
+- Linked the OS quick starts from the website footer and DNS server preset field so users can find them before generating records.
+- Expanded setup-mode guidance with a nameserver hostname walkthrough, glue/DNSSEC/DS/TLSA placement, and provider-specific DNSSEC/TLSA caveats.
 - Added IDNA normalization for internationalized domain input and documented i18n standards.
 - Expanded new-admin FAQ coverage for DNSKEY timing, parent/server record split, TLSA provider support, and DANE web-server requirements.
 - Removed the DANE basic/advanced toggle, made optional fields visible by default, always shows integrator JSON, and added focused field-level "How to get this" help for certificate/PUBLIC KEY and DNSKEY inputs.

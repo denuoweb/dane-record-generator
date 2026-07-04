@@ -18,6 +18,8 @@ const WEBSITE_IPV4_PLACEHOLDER = '203.0.113.20';
 const DONATION_ADDRESS = 'hs1q5997733eq7f4yyk2vq2z8gz3yqyvpz422ypggh';
 const DONATION_URI = `handshake:${DONATION_ADDRESS}`;
 const GITHUB_REPOSITORY_URL = 'https://github.com/denuoweb/dane-record-generator';
+const WEB_ADMIN_GUIDE_URL = `${GITHUB_REPOSITORY_URL}/blob/main/docs/WEB_ADMIN_GUIDE.md`;
+const OS_QUICK_STARTS_URL = `${WEB_ADMIN_GUIDE_URL}#self-hosted-os-quick-starts`;
 const CERTIFICATE_PLACEHOLDER = `-----BEGIN CERTIFICATE-----
 ...
 -----END CERTIFICATE-----
@@ -134,6 +136,21 @@ function DnskeyHowTo(props: { attention?: boolean; context: HowToContext; summar
       <p>{props.t.howTo.dnskeyHosted}</p>
       <p>{props.t.howTo.dnskeyQuery}</p>
       <pre className="inline-code">{`dig @${props.context.dnskeyQueryServer} ${props.context.dnskeyZone} DNSKEY +dnssec +multi`}</pre>
+    </details>
+  );
+}
+
+function SelfHostedQuickStarts() {
+  return (
+    <details className="field-howto quickstart-howto">
+      <summary>Debian / Windows Server quick starts</summary>
+      <p>Use these when you run your own authoritative DNS server for the DANE setup path.</p>
+      <ul>
+        <li><strong>Delegated authoritative DNS:</strong> parent gets nameserver/glue plus DS; the DNS server publishes the signed zone with A/AAAA and TLSA.</li>
+        <li><strong>HNS SYNTH nameserver:</strong> HNS gets SYNTH4/SYNTH6 plus DS; the DNS server still publishes the signed zone with A/AAAA and TLSA.</li>
+      </ul>
+      <p>Choose BIND 9 or Windows Server DNS in this preset field. After records generate, expand <strong>Put this on your authoritative DNS server</strong> and select the matching tab for copy-paste commands.</p>
+      <p><a href={OS_QUICK_STARTS_URL} target="_blank" rel="noreferrer">Open the full OS quick-start guide</a></p>
     </details>
   );
 }
@@ -521,9 +538,11 @@ function App() {
               <option value="powerdns">{t.options.powerdns}</option>
               <option value="knot">{t.options.knot}</option>
               <option value="bind">{t.options.bind}</option>
+              <option value="windows-server">{t.options.windowsServer}</option>
               <option value="nsd">{t.options.nsd}</option>
             </select>
             <FieldHowToText summary={t.faq.presetSummary} body={t.faq.presetBody} />
+            <SelfHostedQuickStarts />
             <FieldHowToText summary={t.faq.hostedSummary} body={t.faq.hostedBody} />
           </Field>
           {setupMode !== 'hns-inline' && (
@@ -650,6 +669,8 @@ function App() {
         <a href={DONATION_URI}>{DONATION_ADDRESS}</a>
         <span>GitHub:</span>
         <a href={GITHUB_REPOSITORY_URL}>denuoweb/dane-record-generator</a>
+        <span>Docs:</span>
+        <a href={WEB_ADMIN_GUIDE_URL}>Web admin guide</a>
       </footer>
     </main>
   );

@@ -382,6 +382,29 @@ summary { cursor: pointer; font-weight: 750; }
   text-underline-offset: 3px;
 }
 
+.quickstart-howto {
+  border: 1px solid #d9e3e8;
+  border-radius: 12px;
+  background: #f5fbff;
+  margin-top: 4px;
+  padding: 10px 12px;
+}
+
+.quickstart-howto ul {
+  color: #514c44;
+  line-height: 1.5;
+  margin: 8px 0;
+}
+
+.quickstart-howto p {
+  margin: 8px 0;
+}
+
+.quickstart-howto a {
+  color: #2f5f78;
+  font-weight: 800;
+}
+
 .attention-howto {
   border-top: 0;
   margin-top: 0;

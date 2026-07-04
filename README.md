@@ -13,7 +13,7 @@ The app keeps the workflow simple:
 ## Main outputs
 
 - **HNS wallet / registrar**: NS, GLUE, DS, SYNTH records as appropriate.
-- **Authoritative DNS server**: tabbed starter config for hosted DNS panels, Generic zone file, PowerDNS, Knot, BIND, or NSD, including NS, A, AAAA, and TLSA records.
+- **Authoritative DNS server**: tabbed starter config for hosted DNS panels, Generic zone file, BIND, Windows Server DNS, PowerDNS, Knot, or NSD, including NS, A, AAAA, and TLSA records.
 - **Verify commands**: `dig`/`delv` checks.
 - **Integrator JSON**: optional machine-readable output for wallets and future APIs.
 
@@ -51,7 +51,7 @@ _443._tcp.dane. 3600 IN TLSA 3 1 1 9B2C...A811
 
 ### ICANN delegated DNSSEC mode
 
-Normal registrar + DNSSEC setup:
+Registrar + DNSSEC setup:
 
 ```text
 # Registrar / parent-zone panel
@@ -89,6 +89,22 @@ DS <keytag> <algorithm> 2 <sha256-digest>
 ```
 
 The app does not sign zones and does not store private keys. DNSSEC signing remains the DNS server’s job.
+
+## Nameserver hostname walkthrough
+
+For DANE setup, choose **Delegated authoritative DNS** when the wallet or registrar should point at a nameserver hostname. The practical setup is:
+
+1. Choose an authoritative DNS provider or run your own authoritative nameserver.
+2. Create the DNS zone for the HNS name or ICANN domain.
+3. Use the provider-assigned nameserver hostnames, or create an in-name hostname such as `ns1.dane.` / `ns1.example.com.`.
+4. If the nameserver hostname is inside the same name or zone, publish glue at the parent: `GLUE4`/`GLUE6` in HNS, or registrar glue for ICANN.
+5. Put the website `A`/`AAAA` records and `_443._tcp` `TLSA` record in the authoritative DNS zone.
+6. Enable DNSSEC signing on that authoritative zone.
+7. Publish the DS at the parent: HNS wallet/name resource for HNS, registrar/parent zone for ICANN.
+
+Provider fit matters. The DNS host must support authoritative DNS, DNSSEC signing, DS or DNSKEY export, and custom `TLSA` records. Cloudflare, Amazon Route 53, Google Cloud DNS, and DNSimple document DNSSEC plus TLSA-capable DNS paths. DigitalOcean DNS is not a fit for this DANE path as of its June 2026 docs because it does not support DNSSEC. Registrars such as Namecheap or GoDaddy may still be usable as the parent-side place to enter DS records while another DNS host serves the signed TLSA zone.
+
+For self-hosted examples, see the Debian/BIND and Windows Server DNS quick starts in [Web Admin Guide](docs/WEB_ADMIN_GUIDE.md).
 
 ## Operational requirements
 
@@ -185,15 +201,16 @@ See [Internationalization standards](docs/I18N_STANDARDS.md) for the UI localiza
 The app keeps setup guidance beside the field it explains:
 
 - **Domain type** explains the wallet/registrar versus authoritative DNS split.
-- **Setup mode** explains delegated DNS versus HNS `SYNTH`.
+- **Setup mode** walks through delegated DNS versus HNS `SYNTH`, including nameserver hostname, glue, DNSSEC, DS, and TLSA placement.
 - **Domain** explains HNS slash form, ICANN DNS names, and IDNA handling.
 - **DNS server preset** explains when to use hosted DNS, generic zone files, or server-specific examples.
+- **Nameserver hostname** explains provider-assigned nameservers versus in-name `ns1.yourname.` hostnames that require glue.
 - **Nameserver IPv4** explains `SYNTH4` and `GLUE4` nameserver address use.
 - **Website IPv4** explains that website `A` records are separate from nameserver `SYNTH`/glue.
 
 ### DNS server preset
 
-Use **Hosted DNS provider panel** if your provider supports DNSSEC signing, DS or DNSKEY export, and custom TLSA records. Use **Generic zone file** when adapting records into another authoritative server. Use **PowerDNS** when you want API/database-backed DNS.
+Use **Hosted DNS provider panel** if your provider supports DNSSEC signing, DS or DNSKEY export, and custom TLSA records. Use **Generic zone file** when adapting records into another authoritative server. Use **BIND 9** for a Debian/Linux quick start. Use **Windows Server DNS** for PowerShell-driven Windows Server setup. Use **PowerDNS** when you want API/database-backed DNS. If the provider cannot publish TLSA records in a signed zone, it cannot complete this DANE setup.
 
 ### What goes in the wallet or registrar?
 

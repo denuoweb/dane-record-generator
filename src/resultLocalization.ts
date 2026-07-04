@@ -101,6 +101,7 @@ const en: CoreCopy = {
       powerdns: 'PowerDNS is a short path when you want an admin API or database-backed DNS.',
       knot: 'Knot DNS is a clean modern authoritative server with simple DNSSEC automation.',
       bind: 'BIND 9 is widely documented and package-manager friendly, but its config is more verbose.',
+      'windows-server': 'Windows Server DNS can host and sign the authoritative zone with DNS Manager or PowerShell.',
       nsd: 'NSD is small and reliable, but DNSSEC signing is usually handled by a separate signing step.'
     }
   }
@@ -326,6 +327,7 @@ const copy: Record<LanguageCode, CoreCopy> = {
           powerdns: 'PowerDNS es un camino corto si quieres DNS con API o base de datos.',
           knot: 'Knot DNS es un valor moderno y limpio con automatización DNSSEC sencilla.',
           bind: 'BIND 9 tiene mucha documentación y paquetes disponibles, pero su configuración es más verbosa.',
+          'windows-server': 'Windows Server DNS puede alojar y firmar la zona autoritativa con DNS Manager o PowerShell.',
           nsd: 'NSD es pequeño y fiable, pero la firma DNSSEC normalmente se maneja aparte.'
         }
       }
@@ -426,6 +428,7 @@ const copy: Record<LanguageCode, CoreCopy> = {
           powerdns: 'PowerDNS est un chemin court pour un DNS avec API ou base de données.',
           knot: 'Knot DNS est un choix moderne avec une automatisation DNSSEC simple.',
           bind: 'BIND 9 est très documenté et disponible, mais sa configuration est plus verbeuse.',
+          'windows-server': 'Windows Server DNS peut héberger et signer la zone faisant autorité avec DNS Manager ou PowerShell.',
           nsd: 'NSD est petit et fiable, mais la signature DNSSEC est souvent séparée.'
         }
       }
@@ -514,6 +517,7 @@ const copy: Record<LanguageCode, CoreCopy> = {
           powerdns: 'PowerDNS ist ein kurzer Weg, wenn API- oder datenbankgestütztes DNS gewünscht ist.',
           knot: 'Knot DNS ist ein moderner Standard mit einfacher DNSSEC-Automatisierung.',
           bind: 'BIND 9 ist gut dokumentiert und paketfreundlich, aber ausführlicher konfiguriert.',
+          'windows-server': 'Windows Server DNS kann die autoritative Zone mit DNS-Manager oder PowerShell hosten und signieren.',
           nsd: 'NSD ist klein und zuverlässig; DNSSEC-Signierung erfolgt meist separat.'
         }
       }
@@ -602,6 +606,7 @@ const copy: Record<LanguageCode, CoreCopy> = {
           powerdns: 'PowerDNS é um caminho curto quando se quer DNS com API ou banco de dados.',
           knot: 'Knot DNS é um padrão moderno com automação DNSSEC simples.',
           bind: 'BIND 9 é bem documentado e disponível, mas sua configuração é mais verbosa.',
+          'windows-server': 'Windows Server DNS pode hospedar e assinar a zona autoritativa com DNS Manager ou PowerShell.',
           nsd: 'NSD é pequeno e confiável, mas a assinatura DNSSEC costuma ser separada.'
         }
       }
@@ -690,6 +695,7 @@ const copy: Record<LanguageCode, CoreCopy> = {
           powerdns: 'API または DB ベースの DNS が必要なら PowerDNS が短い経路です。',
           knot: 'Knot DNS は DNSSEC 自動化が簡単な現代的な既定候補です。',
           bind: 'BIND 9 は文書が多く導入しやすいですが、設定はより冗長です。',
+          'windows-server': 'Windows Server DNS は DNS Manager または PowerShell で権威ゾーンをホストし署名できます。',
           nsd: 'NSD は小さく信頼できますが、DNSSEC 署名は通常別手順です。'
         }
       }

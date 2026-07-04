@@ -7,7 +7,7 @@ This tool answers two questions:
 
 ## Recommended first setup
 
-Use **Delegated authoritative DNS**.
+Use **Delegated authoritative DNS** for the DANE setup path when the wallet or registrar should point at a nameserver hostname.
 
 For an HNS name such as `dane/`:
 
@@ -27,9 +27,210 @@ For HNS names, **SYNTH nameserver** is also supported. It stores the authoritati
 - **PowerDNS Authoritative**: easiest for API/database workflows.
 - **Knot DNS**: clean modern authoritative server with good DNSSEC automation.
 - **BIND 9**: widely documented and available everywhere; more verbose.
+- **Windows Server DNS**: good when the operator already manages Windows Server infrastructure and wants DNS Manager or PowerShell.
 - **NSD**: small authoritative server; signing is usually a separate step.
 
 If you are unsure, start with **Hosted DNS provider panel** when you already use a DNS host. Start with **Generic zone file** when you are running your own authoritative server.
+
+## Delegated nameserver walkthrough
+
+Use this path when a wallet, registrar, or parent zone should point at a nameserver hostname.
+
+### Provider-assigned nameservers
+
+This is the easiest hosted-DNS path:
+
+1. Create the authoritative zone at a DNS provider that supports DNSSEC signing and custom `TLSA` records.
+2. Copy the provider-assigned nameserver hostnames, for example `alice.ns.provider.example.` and `bob.ns.provider.example.`.
+3. Put those nameserver hostnames in the HNS wallet/name resource or registrar nameserver settings.
+4. In the provider's DNS zone, create the website `A`/`AAAA` records and the generated `_443._tcp` `TLSA` record.
+5. Enable DNSSEC signing for the zone.
+6. Copy the provider's DS record to the HNS wallet/name resource or registrar. If the provider exposes DNSKEY instead of DS, paste DNSKEY into this app and publish the generated DS.
+7. Verify direct authoritative answers first, then verify DNSSEC chain validation and TLSA.
+
+### Your own nameserver hostname
+
+Use this when you want a hostname such as `ns1.dane.` or `ns1.example.com.`:
+
+1. Run an authoritative DNS server, or use a provider feature that supports branded/vanity nameservers.
+2. Create the child zone on that authoritative service.
+3. Give the nameserver hostname an address: `ns1.dane. A 203.0.113.10` or `ns1.example.com. A 203.0.113.10`.
+4. Because that nameserver hostname is inside the same name or zone it serves, publish glue at the parent: `GLUE4`/`GLUE6` in HNS, or registrar glue for ICANN.
+5. Publish the website `A`/`AAAA`, `TLSA`, and signed DNSSEC records from the authoritative service.
+6. Publish DS at the parent after signing.
+
+Do not put website IPs in glue. Glue only helps resolvers find the nameserver. Website `A`/`AAAA` and `TLSA` remain in the authoritative DNS zone.
+
+## Self-hosted OS quick starts
+
+Delegated authoritative DNS and HNS SYNTH use the same DNS-server job: serve the signed zone with `NS`, website `A`/`AAAA`, `TLSA`, `DNSKEY`, `RRSIG`, and authenticated denial records. The parent-side step is what changes:
+
+- **Delegated authoritative DNS**: parent gets `NS` or `GLUE4`/`GLUE6`, plus `DS`.
+- **HNS SYNTH nameserver**: HNS parent gets `SYNTH4`/`SYNTH6`, plus `DS`.
+
+### Debian with BIND 9: delegated authoritative DANE
+
+Example values:
+
+```text
+Zone: dane.
+Nameserver hostname: ns1.dane.
+Nameserver IPv4: 203.0.113.10
+Website IPv4: 203.0.113.20
+TLSA owner: _443._tcp.dane.
+```
+
+Install BIND and DNS tools:
+
+```bash
+sudo apt update
+sudo apt install bind9 bind9-utils dnsutils
+sudo install -d -o bind -g bind /etc/bind/zones
+```
+
+In `/etc/bind/named.conf.options`, make the service authoritative-only:
+
+```conf
+options {
+  directory "/var/cache/bind";
+  listen-on { any; };
+  listen-on-v6 { any; };
+  allow-query { any; };
+  recursion no;
+  allow-recursion { none; };
+};
+```
+
+In `/etc/bind/named.conf.local`, define the signed zone:
+
+```conf
+zone "dane" {
+  type primary;
+  file "/etc/bind/zones/db.dane";
+  dnssec-policy default;
+  inline-signing yes;
+  allow-transfer { none; };
+};
+```
+
+Create `/etc/bind/zones/db.dane`:
+
+```zone
+$ORIGIN dane.
+$TTL 3600
+@ 3600 IN SOA ns1.dane. hostmaster.dane. (
+  2026070401 ; serial
+  3600       ; refresh
+  900        ; retry
+  1209600    ; expire
+  3600       ; minimum
+)
+@         3600 IN NS    ns1.dane.
+ns1       3600 IN A     203.0.113.10
+@         3600 IN A     203.0.113.20
+_443._tcp 3600 IN TLSA  3 1 1 <spki-sha256>
+```
+
+Check, start, and query:
+
+```bash
+sudo named-checkconf
+sudo named-checkzone dane /etc/bind/zones/db.dane
+sudo systemctl enable --now bind9
+sudo systemctl reload bind9
+dig @127.0.0.1 dane. SOA +dnssec +norecurse
+dig @127.0.0.1 _443._tcp.dane. TLSA +dnssec +norecurse
+dig @127.0.0.1 dane. DNSKEY +dnssec +multi
+```
+
+Then paste the public DNSKEY into this app, publish the generated `DS` in the HNS wallet, and publish `GLUE4 ns1.dane. 203.0.113.10` in the HNS wallet. For ICANN, use the registrar's nameserver, glue, and DS fields instead.
+
+### Debian with BIND 9: HNS SYNTH nameserver
+
+Use this only for HNS names when the HNS resource should store the nameserver IP directly.
+
+1. In the app, choose **HNS SYNTH nameserver** and enter the authoritative DNS server IP.
+2. Use the generated synthetic `NS` name in the zone output, for example `_pc0722g._synth.`.
+3. Configure BIND with the same `named.conf.options` and `dnssec-policy default` zone block shown above.
+4. In the zone file, use the generated `NS`, website `A`/`AAAA`, and `TLSA` records.
+5. Query DNSKEY after signing and publish `SYNTH4`/`SYNTH6` plus `DS` in the HNS wallet.
+
+Example SYNTH zone content:
+
+```zone
+$ORIGIN dane.
+$TTL 3600
+@ 3600 IN SOA _pc0722g._synth. hostmaster.dane. (
+  2026070401 3600 900 1209600 3600
+)
+@         3600 IN NS    _pc0722g._synth.
+@         3600 IN A     203.0.113.20
+_443._tcp 3600 IN TLSA  3 1 1 <spki-sha256>
+```
+
+Do not add `GLUE4` for SYNTH mode. The HNS resource gets `SYNTH4 203.0.113.10`; the authoritative DNS server still serves the signed zone.
+
+### Windows Server DNS: delegated authoritative DANE
+
+Run these commands in an elevated PowerShell session on the DNS server:
+
+```powershell
+Install-WindowsFeature DNS -IncludeManagementTools
+Set-DnsServerRecursion -Enable $false
+New-NetFirewallRule -DisplayName "DNS UDP 53" -Direction Inbound -Protocol UDP -LocalPort 53 -Action Allow
+New-NetFirewallRule -DisplayName "DNS TCP 53" -Direction Inbound -Protocol TCP -LocalPort 53 -Action Allow
+
+Add-DnsServerPrimaryZone -Name "dane" -ZoneFile "dane.dns"
+Add-DnsServerResourceRecord -NS -ZoneName "dane" -Name "." -NameServer "ns1.dane." -TimeToLive (New-TimeSpan -Seconds 3600)
+Add-DnsServerResourceRecordA -ZoneName "dane" -Name "ns1" -IPv4Address "203.0.113.10" -TimeToLive (New-TimeSpan -Seconds 3600)
+Add-DnsServerResourceRecordA -ZoneName "dane" -Name "." -IPv4Address "203.0.113.20" -TimeToLive (New-TimeSpan -Seconds 3600)
+Add-DnsServerResourceRecord -TLSA -ZoneName "dane" -Name "_443._tcp" -CertificateUsage DomainIssuedCertificate -Selector SubjectPublicKeyInfo -MatchingType Sha256Hash -CertificateAssociationData "<spki-sha256>" -TimeToLive (New-TimeSpan -Seconds 3600)
+
+Invoke-DnsServerZoneSign -ZoneName "dane" -SignWithDefault -PassThru -Verbose
+Get-DnsServerResourceRecord -ZoneName "dane" -RRType DNSKEY
+Get-DnsServerResourceRecord -ZoneName "dane" -RRType DS
+```
+
+Then publish the parent-side material:
+
+- HNS delegated: `GLUE4 ns1.dane. 203.0.113.10` plus `DS` in the HNS wallet.
+- ICANN delegated: nameserver `ns1.example.com.`, registrar glue if in-zone, plus `DS`.
+
+### Windows Server DNS: HNS SYNTH nameserver
+
+Use the same Windows DNS Server role, firewall, recursion, zone signing, and TLSA commands. Change only the parent-side setup and the zone `NS` target:
+
+```powershell
+Add-DnsServerPrimaryZone -Name "dane" -ZoneFile "dane.dns"
+Add-DnsServerResourceRecord -NS -ZoneName "dane" -Name "." -NameServer "_pc0722g._synth." -TimeToLive (New-TimeSpan -Seconds 3600)
+Add-DnsServerResourceRecordA -ZoneName "dane" -Name "." -IPv4Address "203.0.113.20" -TimeToLive (New-TimeSpan -Seconds 3600)
+Add-DnsServerResourceRecord -TLSA -ZoneName "dane" -Name "_443._tcp" -CertificateUsage DomainIssuedCertificate -Selector SubjectPublicKeyInfo -MatchingType Sha256Hash -CertificateAssociationData "<spki-sha256>" -TimeToLive (New-TimeSpan -Seconds 3600)
+Invoke-DnsServerZoneSign -ZoneName "dane" -SignWithDefault -PassThru -Verbose
+```
+
+The HNS wallet gets `SYNTH4 203.0.113.10` and `DS`. It does not get website `A` records or `TLSA`.
+
+## Provider notes
+
+Provider support changes, so confirm the current docs before committing a production name. For this app's DANE flow, the DNS host must support authoritative DNS, DNSSEC signing, DS or DNSKEY export, and custom `TLSA` records.
+
+- **Cloudflare DNS**: create the zone, use Cloudflare's assigned nameservers or an eligible custom-nameserver setup, add `A`/`AAAA` plus `TLSA`, enable DNSSEC, then copy Cloudflare's DS record to the parent. Cloudflare documents DNSSEC signing and supported DNS record types including `TLSA`.
+- **Amazon Route 53**: create a public hosted zone, use its assigned NS set, add `A`/`AAAA` plus `TLSA`, enable DNSSEC signing with a KSK/KMS setup, then publish the DS values Route 53 provides. Route 53 documents `TLSA` as a supported record type.
+- **Google Cloud DNS**: create a public managed zone, add `A`/`AAAA` plus `TLSA`, enable DNSSEC on the managed zone, then publish the DS at the parent. Google documents `TLSA` and warns to use it only in DNSSEC-secured zones.
+- **DNSimple**: use DNSimple nameservers, enable DNSSEC, and add `TLSA` in the DNS record editor. DNSimple notes TLSA support is for DNSimple nameservers.
+- **DigitalOcean DNS**: not suitable for this exact DNSSEC + DANE path as of DigitalOcean's June 2026 support docs because DigitalOcean DNS does not support DNSSEC. You can still host the web server or an authoritative DNS daemon on DigitalOcean infrastructure, but use a DNS service that signs the zone and publishes `TLSA`.
+- **Namecheap, GoDaddy, and similar registrars**: treat these as the parent-side control panel when DNS is hosted elsewhere. Enter custom nameservers and DS records there, but put `TLSA` on the authoritative DNS host. Do not assume the registrar's bundled DNS product can host DANE unless its current record-type list includes `TLSA` and DNSSEC signing.
+
+Provider reference docs:
+
+- [Cloudflare DNSSEC](https://developers.cloudflare.com/dns/dnssec/) and [Cloudflare DNS record types](https://developers.cloudflare.com/dns/manage-dns-records/reference/dns-record-types/)
+- [Amazon Route 53 DNSSEC signing](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-configuring-dnssec-enable-signing.html) and [Route 53 record types](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/ResourceRecordTypes.html)
+- [Google Cloud DNSSEC](https://docs.cloud.google.com/dns/docs/dnssec) and [Google Cloud DNS record types](https://docs.cloud.google.com/dns/docs/records-overview)
+- [DNSimple DNSSEC](https://support.dnsimple.com/articles/dnssec/) and [DNSimple TLSA records](https://support.dnsimple.com/articles/manage-tlsa-record/)
+- [DigitalOcean DNSSEC support status](https://docs.digitalocean.com/support/does-digitalocean-support-dnssec/)
+- [Namecheap custom-DNS DNSSEC](https://www.namecheap.com/support/knowledgebase/article.aspx/9722/2232/managing-dnssec-for-domains-pointed-to-custom-dns/) and [GoDaddy DNSSEC](https://www.godaddy.com/help/turn-dnssec-on-or-off-6420)
+- [BIND 9 DNSSEC key and signing policy](https://kb.isc.org/docs/dnssec-key-and-signing-policy)
+- [Microsoft DNSSEC zone signing](https://learn.microsoft.com/en-us/windows-server/networking/dns/sign-dnssec-zone), [Invoke-DnsServerZoneSign](https://learn.microsoft.com/en-us/powershell/module/dnsserver/invoke-dnsserverzonesign), and [Add-DnsServerResourceRecord TLSA parameters](https://learn.microsoft.com/en-us/powershell/module/dnsserver/add-dnsserverresourcerecord)
 
 ## Wallet / registrar side
 
@@ -62,7 +263,7 @@ _443._tcp.dane. 3600 IN TLSA 3 1 1 <spki-sha256>
 
 ## Running your own authoritative nameserver
 
-If you run the nameserver yourself, the generated records are only the zone content. The service still needs normal authoritative-DNS operations:
+If you run the nameserver yourself, the generated records are only the zone content. The service still needs baseline authoritative-DNS operations:
 
 - Listen publicly on both UDP/53 and TCP/53. DNSSEC responses are often larger, and TCP fallback must work.
 - Disable recursion on the authoritative service. Do not expose an open resolver from the same listener.

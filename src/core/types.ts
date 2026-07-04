@@ -1,7 +1,7 @@
 export type DomainType = 'hns' | 'icann';
 export type SetupMode = 'delegated' | 'hns-inline';
 export type TransportProtocol = 'tcp' | 'udp' | 'sctp';
-export type DnsServerPreset = 'generic-zone' | 'hosted-dns' | 'powerdns' | 'knot' | 'bind' | 'nsd';
+export type DnsServerPreset = 'generic-zone' | 'hosted-dns' | 'powerdns' | 'knot' | 'bind' | 'windows-server' | 'nsd';
 export type CheckStatus = 'ok' | 'warn' | 'missing';
 export type Severity = 'info' | 'warning' | 'error';
 export type OutputAudience = 'parent' | 'authoritative' | 'server' | 'web' | 'verify' | 'integrator';

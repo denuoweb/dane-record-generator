@@ -286,9 +286,42 @@ describe('bootstrap generator', () => {
     expect(bindOption?.presentation?.defaultSelected).toBe(true);
     expect(bindOption?.value).toContain('named.conf.local');
     expect(result.serverPresetRecords[0]!.value).toContain('$ORIGIN dane.');
+    expect(result.serverPresetRecords[0]!.value).toContain('ns1 3600 IN A 203.0.113.10');
     expect(result.serverPresetRecords[0]!.value).toContain('Disable recursion');
     expect(result.serverPresetRecords[0]!.value).toContain('UDP/53 and TCP/53');
     expect(result.sections.some((section) => section.id === 'server')).toBe(false);
+  });
+
+  it('generates a Windows Server DNS PowerShell quick start', async () => {
+    const result = await generateBootstrap({
+      domainType: 'hns',
+      setupMode: 'delegated',
+      domainInput: 'dane/',
+      nameserverHost: 'ns1.dane.',
+      nameserverIpv4: '203.0.113.10',
+      websiteIpv4: '203.0.113.20',
+      port: 443,
+      protocol: 'tcp',
+      pemInput: PUBLIC_KEY,
+      dnsServerPreset: 'windows-server'
+    });
+
+    const preset = result.serverPresetRecords[0]!.value;
+    expect(result.serverPresetTitle).toBe('Windows Server DNS PowerShell');
+    expect(preset).toContain('Install-WindowsFeature DNS -IncludeManagementTools');
+    expect(preset).toContain('Set-DnsServerRecursion -Enable $false');
+    expect(preset).toContain('Add-DnsServerPrimaryZone -Name "dane" -ZoneFile "dane.dns"');
+    expect(preset).toContain('Add-DnsServerResourceRecord -NS -ZoneName "dane" -Name "." -NameServer "ns1.dane."');
+    expect(preset).toContain('Add-DnsServerResourceRecordA -ZoneName "dane" -Name "ns1" -IPv4Address "203.0.113.10"');
+    expect(preset).toContain('Add-DnsServerResourceRecordA -ZoneName "dane" -Name "." -IPv4Address "203.0.113.20"');
+    expect(preset).toContain('Add-DnsServerResourceRecord -TLSA -ZoneName "dane" -Name "_443._tcp"');
+    expect(preset).toContain('-CertificateUsage DomainIssuedCertificate -Selector SubjectPublicKeyInfo -MatchingType Sha256Hash');
+    expect(preset).toContain('Invoke-DnsServerZoneSign -ZoneName "dane" -SignWithDefault');
+    expect(preset).toContain('Get-DnsServerResourceRecord -ZoneName "dane" -RRType DNSKEY');
+    expect(preset).toContain('Get-DnsServerResourceRecord -ZoneName "dane" -RRType DS');
+    const windowsOption = result.authoritativeRecords.find((line) => line.presentation?.tabId === 'windows-server');
+    expect(windowsOption?.presentation?.tabLabel).toBe('Windows Server');
+    expect(windowsOption?.presentation?.defaultSelected).toBe(true);
   });
 
   it('generates a hosted DNS provider checklist', async () => {
