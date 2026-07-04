@@ -107,6 +107,7 @@ Validation is shown on the input fields instead of a separate attention card:
 - Yellow fields are required for the current domain type and setup mode but have not been touched yet.
 - Red fields are malformed, or required and still blank after user interaction.
 - Optional blank fields stay neutral.
+- In delegated mode, Nameserver IPv4/IPv6 is required until the nameserver is known to be external. In-zone delegated nameservers need glue; external delegated nameservers do not.
 
 ## Verification behavior
 

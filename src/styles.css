@@ -115,7 +115,7 @@ details p,
 
 .hero-steps {
   max-width: 860px;
-  margin: 0 0 18px;
+  margin: 0;
   padding-left: 22px;
   color: #514c44;
   line-height: 1.55;
@@ -125,7 +125,6 @@ details p,
   margin-top: 5px;
 }
 
-.example-row,
 .output-heading {
   display: flex;
   gap: 10px;

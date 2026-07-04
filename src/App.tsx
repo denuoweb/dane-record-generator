@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useState, type ReactNode } from 'react';
 import type { BootstrapInput, BootstrapResult, DnsServerPreset, DomainType, GeneratedLine, OutputSection, SetupMode, StatusCheck } from './core/types';
 import { generateBootstrap } from './core/bootstrap';
 import { isInBailiwick, normalizeDomain, validateDomainName, validateHostname, validateIpv4, validateIpv6 } from './core/domain';
@@ -9,12 +9,12 @@ import { isLanguageCode, languageOptions, localeText, type LanguageCode, type Lo
 import { localizeBootstrapResult } from './resultLocalization';
 import { readUrlPrefill } from './urlPrefill';
 
-const HNS_EXAMPLE_DOMAIN = 'dane/';
-const ICANN_EXAMPLE_DOMAIN = 'example.com';
-const HNS_EXAMPLE_NAMESERVER = 'ns1.dane.';
-const ICANN_EXAMPLE_NAMESERVER = 'ns1.example.com.';
-const EXAMPLE_NAMESERVER_IPV4 = '203.0.113.10';
-const EXAMPLE_WEBSITE_IPV4 = '203.0.113.20';
+const HNS_DOMAIN_PLACEHOLDER = 'dane/';
+const ICANN_DOMAIN_PLACEHOLDER = 'example.com';
+const HNS_NAMESERVER_PLACEHOLDER = 'ns1.dane.';
+const ICANN_NAMESERVER_PLACEHOLDER = 'ns1.example.com.';
+const NAMESERVER_IPV4_PLACEHOLDER = '203.0.113.10';
+const WEBSITE_IPV4_PLACEHOLDER = '203.0.113.20';
 const DONATION_ADDRESS = 'hs1q5997733eq7f4yyk2vq2z8gz3yqyvpz422ypggh';
 const DONATION_URI = `handshake:${DONATION_ADDRESS}`;
 const GITHUB_REPOSITORY_URL = 'https://github.com/denuoweb/dane-record-generator';
@@ -318,7 +318,6 @@ function App() {
   const [touchedFields, setTouchedFields] = useState<TouchedFields>({});
   const [result, setResult] = useState<BootstrapResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const interactionScrollY = useRef<number | null>(null);
   const t = localeText[language];
 
   const input = useMemo<BootstrapInput>(() => ({
@@ -375,104 +374,15 @@ function App() {
     return () => { cancelled = true; };
   }, [input]);
 
-  function rememberScrollY() {
-    if (typeof window !== 'undefined') interactionScrollY.current = window.scrollY;
-  }
-
-  function preserveScroll(update: () => void) {
-    if (typeof window === 'undefined') {
-      update();
-      return;
-    }
-
-    const top = interactionScrollY.current ?? window.scrollY;
-    const left = window.scrollX;
-
-    update();
-    interactionScrollY.current = null;
-
-    const restore = () => {
-      const maxTop = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      window.scrollTo(left, Math.min(top, maxTop));
-    };
-
-    window.requestAnimationFrame(() => {
-      restore();
-      window.requestAnimationFrame(restore);
-      window.setTimeout(restore, 80);
-    });
-  }
-
   function markTouched(field: FieldKey) {
     setTouchedFields((current) => current[field] ? current : { ...current, [field]: true });
-  }
-
-  function handleDomainTypeChange(nextDomainType: DomainType) {
-    preserveScroll(() => {
-      const currentDomain = domainInput.trim();
-      const currentNameserver = nameserverHost.trim();
-
-      setDomainType(nextDomainType);
-      if (nextDomainType === 'icann') {
-        setSetupMode('delegated');
-        if (currentDomain === HNS_EXAMPLE_DOMAIN) setDomainInput(ICANN_EXAMPLE_DOMAIN);
-        if (currentNameserver === HNS_EXAMPLE_NAMESERVER) setNameserverHost(ICANN_EXAMPLE_NAMESERVER);
-        return;
-      }
-
-      if (currentDomain === ICANN_EXAMPLE_DOMAIN) setDomainInput(HNS_EXAMPLE_DOMAIN);
-      if (currentNameserver === ICANN_EXAMPLE_NAMESERVER) setNameserverHost(HNS_EXAMPLE_NAMESERVER);
-    });
-  }
-
-  function handleSetupModeChange(nextSetupMode: SetupMode) {
-    preserveScroll(() => {
-      setSetupMode(nextSetupMode);
-    });
-  }
-
-  function loadExample(kind: 'hns-delegated' | 'hns-inline' | 'icann') {
-    setTouchedFields({});
-    setPemInput('');
-    setDnskeyInput('');
-    setNameserverHost('');
-    setNameserverIpv4('');
-    setNameserverIpv6('');
-    setWebsiteIpv4('');
-    setWebsiteIpv6('');
-    if (kind === 'hns-delegated') {
-      setDomainType('hns');
-      setSetupMode('delegated');
-      setDomainInput(HNS_EXAMPLE_DOMAIN);
-      setNameserverHost(HNS_EXAMPLE_NAMESERVER);
-      setNameserverIpv4(EXAMPLE_NAMESERVER_IPV4);
-      setWebsiteIpv4(EXAMPLE_WEBSITE_IPV4);
-      setDnsServerPreset('generic-zone');
-    }
-    if (kind === 'hns-inline') {
-      setDomainType('hns');
-      setSetupMode('hns-inline');
-      setDomainInput(HNS_EXAMPLE_DOMAIN);
-      setNameserverIpv4(EXAMPLE_NAMESERVER_IPV4);
-      setWebsiteIpv4(EXAMPLE_WEBSITE_IPV4);
-      setDnsServerPreset('generic-zone');
-    }
-    if (kind === 'icann') {
-      setDomainType('icann');
-      setSetupMode('delegated');
-      setDomainInput(ICANN_EXAMPLE_DOMAIN);
-      setNameserverHost(ICANN_EXAMPLE_NAMESERVER);
-      setNameserverIpv4(EXAMPLE_NAMESERVER_IPV4);
-      setWebsiteIpv4(EXAMPLE_WEBSITE_IPV4);
-      setDnsServerPreset('bind');
-    }
   }
 
   const displayResult = useMemo(() => result ? localizeBootstrapResult(result, input, language) : null, [input, language, result]);
   const sections = useMemo(() => displayResult?.sections ?? [], [displayResult]);
   const handoffGuidance = useMemo(() => guidanceForIntent(urlPrefill.intent), [urlPrefill.intent]);
-  const domainPlaceholder = domainType === 'hns' ? HNS_EXAMPLE_DOMAIN : ICANN_EXAMPLE_DOMAIN;
-  const nameserverPlaceholder = domainType === 'hns' ? HNS_EXAMPLE_NAMESERVER : ICANN_EXAMPLE_NAMESERVER;
+  const domainPlaceholder = domainType === 'hns' ? HNS_DOMAIN_PLACEHOLDER : ICANN_DOMAIN_PLACEHOLDER;
+  const nameserverPlaceholder = domainType === 'hns' ? HNS_NAMESERVER_PLACEHOLDER : ICANN_NAMESERVER_PLACEHOLDER;
   const fieldStatuses = useMemo(() => {
     let normalizedDomain: string | null = null;
     try {
@@ -484,11 +394,13 @@ function App() {
 
     const nameserverHostValid = nameserverHost.trim() ? validateHostname(nameserverHost) : false;
     let nameserverAddressRequired = setupMode === 'hns-inline' && domainType === 'hns';
-    if (setupMode === 'delegated' && normalizedDomain && nameserverHostValid) {
+    if (setupMode === 'delegated') {
       try {
-        nameserverAddressRequired = isInBailiwick(nameserverHost, normalizedDomain);
+        nameserverAddressRequired = normalizedDomain && nameserverHostValid
+          ? isInBailiwick(nameserverHost, normalizedDomain)
+          : true;
       } catch {
-        nameserverAddressRequired = false;
+        nameserverAddressRequired = true;
       }
     }
 
@@ -553,11 +465,6 @@ function App() {
           <li>{t.hero.steps.zone}</li>
           <li>{t.hero.steps.done}</li>
         </ul>
-        <div className="example-row">
-          <button type="button" onClick={() => loadExample('hns-delegated')}>{t.examples.hnsDelegated}</button>
-          <button type="button" onClick={() => loadExample('hns-inline')}>{t.examples.hnsInline}</button>
-          <button type="button" onClick={() => loadExample('icann')}>{t.examples.icann}</button>
-        </div>
       </header>
 
       <HandoffCard guidance={handoffGuidance} />
@@ -568,10 +475,7 @@ function App() {
           <Field label={t.fields.domainType} help={t.fields.domainTypeHelp} status={fieldStatuses.domainType}>
             <select
               value={domainType}
-              onFocus={rememberScrollY}
-              onPointerDown={rememberScrollY}
-              onKeyDown={rememberScrollY}
-              onChange={(event) => handleDomainTypeChange(event.target.value as DomainType)}
+              onChange={(event) => setDomainType(event.target.value as DomainType)}
             >
               <option value="hns">{t.options.hns}</option>
               <option value="icann">{t.options.icann}</option>
@@ -581,10 +485,7 @@ function App() {
           <Field label={t.fields.setupMode} help={t.fields.setupModeHelp} status={fieldStatuses.setupMode}>
             <select
               value={setupMode}
-              onFocus={rememberScrollY}
-              onPointerDown={rememberScrollY}
-              onKeyDown={rememberScrollY}
-              onChange={(event) => handleSetupModeChange(event.target.value as SetupMode)}
+              onChange={(event) => setSetupMode(event.target.value as SetupMode)}
             >
               <option value="delegated">{t.options.delegated}</option>
               <option value="hns-inline" disabled={domainType !== 'hns'}>{t.options.hnsInline}</option>
@@ -647,7 +548,7 @@ function App() {
                 markTouched('nameserverIpv4');
                 setNameserverIpv4(event.target.value);
               }}
-              placeholder={EXAMPLE_NAMESERVER_IPV4}
+              placeholder={NAMESERVER_IPV4_PLACEHOLDER}
               autoComplete="off"
             />
             <FieldHowToText summary={t.faq.nameserverIpv4Summary} body={t.faq.nameserverIpv4Body} />
@@ -671,7 +572,7 @@ function App() {
                 markTouched('websiteIpv4');
                 setWebsiteIpv4(event.target.value);
               }}
-              placeholder={EXAMPLE_WEBSITE_IPV4}
+              placeholder={WEBSITE_IPV4_PLACEHOLDER}
               autoComplete="off"
             />
             <FieldHowToText summary={t.faq.websiteIpv4Summary} body={t.faq.websiteIpv4Body} />

@@ -13,11 +13,6 @@ export const localeText = {
         done: 'Publish DNSSEC and TLSA so the DANE website can serve.'
       }
     },
-    examples: {
-      hnsDelegated: 'HNS delegated',
-      hnsInline: 'HNS SYNTH nameserver',
-      icann: 'ICANN DNSSEC'
-    },
     sections: {
       domain: '1. Domain',
       server: '2. Server',
@@ -36,7 +31,7 @@ export const localeText = {
       nameserverHost: 'Nameserver hostname',
       nameserverHostHelp: 'Use ns1.yourname. if this server belongs under the same name. That requires glue.',
       nameserverIpv4: 'Nameserver IPv4',
-      nameserverIpv4Help: 'The public IPv4 address of the authoritative DNS server.',
+      nameserverIpv4Help: 'Required for HNS SYNTH and in-zone delegated nameservers; optional for external delegated nameservers.',
       nameserverIpv6: 'Nameserver IPv6 (optional)',
       nameserverIpv6Help: 'Optional IPv6 glue/address for the DNS server.',
       websiteIpv4: 'Website IPv4',
@@ -160,7 +155,6 @@ export const localeText = {
         done: 'Publica DNSSEC y TLSA para que el sitio DANE pueda servir.'
       }
     },
-    examples: { hnsDelegated: 'HNS delegado', hnsInline: 'Nameserver SYNTH HNS', icann: 'DNSSEC ICANN' },
     sections: { domain: '1. Dominio', server: '2. Servidor', dane: '3. DANE' },
     fields: {
       domainType: 'Tipo de dominio',
@@ -175,7 +169,7 @@ export const localeText = {
       nameserverHost: 'Nombre del servidor DNS',
       nameserverHostHelp: 'Usa ns1.tunombre. si este servidor está dentro del mismo nombre. Eso requiere glue.',
       nameserverIpv4: 'IPv4 del servidor DNS',
-      nameserverIpv4Help: 'La IPv4 pública del servidor DNS autoritativo.',
+      nameserverIpv4Help: 'Obligatoria para SYNTH HNS y nameservers delegados dentro de la zona; opcional para nameservers delegados externos.',
       nameserverIpv6: 'IPv6 del servidor DNS (opcional)',
       nameserverIpv6Help: 'Glue/dirección IPv6 opcional para el servidor DNS.',
       websiteIpv4: 'IPv4 del sitio web',
@@ -277,7 +271,6 @@ export const localeText = {
         done: 'Publiez DNSSEC et TLSA afin que le site DANE puisse servir.'
       }
     },
-    examples: { hnsDelegated: 'HNS délégué', hnsInline: 'Nameserver SYNTH HNS', icann: 'DNSSEC ICANN' },
     sections: { domain: '1. Domaine', server: '2. Serveur', dane: '3. DANE' },
     fields: {
       domainType: 'Type de domaine',
@@ -292,7 +285,7 @@ export const localeText = {
       nameserverHost: 'Nom du serveur de noms',
       nameserverHostHelp: 'Utilisez ns1.votrenom. si ce serveur est sous le même nom. Cela nécessite de la glue.',
       nameserverIpv4: 'IPv4 du serveur de noms',
-      nameserverIpv4Help: 'L’adresse IPv4 publique du serveur DNS faisant autorité.',
+      nameserverIpv4Help: 'Requise pour SYNTH HNS et les serveurs de noms délégués dans la zone ; facultative pour les serveurs de noms délégués externes.',
       nameserverIpv6: 'IPv6 du serveur de noms (facultatif)',
       nameserverIpv6Help: 'Glue/adresse IPv6 facultative pour le serveur DNS.',
       websiteIpv4: 'IPv4 du site web',
@@ -394,7 +387,6 @@ export const localeText = {
         done: 'Veröffentlichen Sie DNSSEC und TLSA, damit die DANE-Website ausgeliefert werden kann.'
       }
     },
-    examples: { hnsDelegated: 'HNS delegiert', hnsInline: 'HNS SYNTH-Nameserver', icann: 'ICANN DNSSEC' },
     sections: { domain: '1. Domain', server: '2. Server', dane: '3. DANE' },
     fields: {
       domainType: 'Domaintyp',
@@ -409,7 +401,7 @@ export const localeText = {
       nameserverHost: 'Nameserver-Hostname',
       nameserverHostHelp: 'Nutzen Sie ns1.ihrname., wenn dieser Server unter demselben Namen liegt. Das erfordert Glue.',
       nameserverIpv4: 'Nameserver IPv4',
-      nameserverIpv4Help: 'Die öffentliche IPv4-Adresse des autoritativen DNS-Servers.',
+      nameserverIpv4Help: 'Erforderlich für HNS SYNTH und delegierte Nameserver in der Zone; optional für externe delegierte Nameserver.',
       nameserverIpv6: 'Nameserver IPv6 (optional)',
       nameserverIpv6Help: 'Optionale IPv6-Glue/Adresse für den DNS-Server.',
       websiteIpv4: 'Website IPv4',
@@ -511,7 +503,6 @@ export const localeText = {
         done: 'Publique DNSSEC e TLSA para que o site DANE possa servir.'
       }
     },
-    examples: { hnsDelegated: 'HNS delegado', hnsInline: 'Nameserver SYNTH HNS', icann: 'DNSSEC ICANN' },
     sections: { domain: '1. Domínio', server: '2. Servidor', dane: '3. DANE' },
     fields: {
       domainType: 'Tipo de domínio',
@@ -526,7 +517,7 @@ export const localeText = {
       nameserverHost: 'Hostname do nameserver',
       nameserverHostHelp: 'Use ns1.seunome. se este servidor estiver sob o mesmo nome. Isso requer glue.',
       nameserverIpv4: 'IPv4 do nameserver',
-      nameserverIpv4Help: 'O endereço IPv4 público do servidor DNS autoritativo.',
+      nameserverIpv4Help: 'Obrigatório para SYNTH HNS e nameservers delegados dentro da zona; opcional para nameservers delegados externos.',
       nameserverIpv6: 'IPv6 do nameserver (opcional)',
       nameserverIpv6Help: 'Glue/endereço IPv6 opcional para o servidor DNS.',
       websiteIpv4: 'IPv4 do site',
@@ -628,7 +619,6 @@ export const localeText = {
         done: 'DNSSEC と TLSA を公開して DANE Web サイトを配信できるようにします。'
       }
     },
-    examples: { hnsDelegated: 'HNS 委任', hnsInline: 'HNS SYNTH ネームサーバー', icann: 'ICANN DNSSEC' },
     sections: { domain: '1. ドメイン', server: '2. サーバー', dane: '3. DANE' },
     fields: {
       domainType: 'ドメイン種別',
@@ -643,7 +633,7 @@ export const localeText = {
       nameserverHost: 'ネームサーバー名',
       nameserverHostHelp: '同じ名前の下にあるサーバーなら ns1.yourname. を使います。その場合 glue が必要です。',
       nameserverIpv4: 'ネームサーバー IPv4',
-      nameserverIpv4Help: '権威 DNS サーバーの公開 IPv4 アドレスです。',
+      nameserverIpv4Help: 'HNS SYNTH とゾーン内の委任ネームサーバーでは必須です。外部の委任ネームサーバーでは任意です。',
       nameserverIpv6: 'ネームサーバー IPv6 (任意)',
       nameserverIpv6Help: 'DNS サーバー用の任意の IPv6 glue/アドレスです。',
       websiteIpv4: 'Web サイト IPv4',
