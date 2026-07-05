@@ -93,6 +93,7 @@ fi
 "$SCRIPT_DIR/verify-hns.sh" || true
 "$SCRIPT_DIR/generate-dashboard.sh"
 "$SCRIPT_DIR/generate-backup.sh" >/dev/null || true
+"$SCRIPT_DIR/generate-ssh-instructions.sh"
 
 cat > /usr/local/bin/hns-dane <<EOF
 #!/usr/bin/env bash
@@ -107,6 +108,7 @@ safe_systemctl enable --now hns-dane-verify.timer >/dev/null 2>&1 || true
 
 log "Dashboard: $(json_get '.dashboard.publicUrl')"
 log "Wallet instructions: $(selected_wallet_path)"
+log "SSH start-here file: $HNS_DANE_ROOT/README-FIRST.txt"
 
 if [[ -n "$TMP_DIR" ]]; then
   rm -rf "$TMP_DIR"
