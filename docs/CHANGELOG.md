@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fixed generated appliance dashboard contrast in dark-mode browsers by using explicit light-theme colors.
 - Added HNS DANE appliance StackScript fields for hsd wallet id and hsd account name, with account-aware `hsw-rpc sendupdate` instructions.
 - Added an experimental HNS Browser Capsule TXT output that reuses TLSA 3 1 1 SPKI hashes and emits compact HSD `TXT` resource JSON for direct browser tests.
 - Replaced raw browser base64 decode errors with field-specific PEM/DNSKEY validation messages.

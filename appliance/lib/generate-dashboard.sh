@@ -76,23 +76,23 @@ print(f"""<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{e(title)} - {e(label)}/</title>
   <style>
-    :root {{ color-scheme: light dark; --bg: #f7f8fa; --fg: #17202a; --muted: #5b6573; --line: #ccd3dc; --ok: #176b47; --warn: #8a5a00; --bad: #9c2f2f; }}
+    :root {{ color-scheme: light; --bg: #f7f8fa; --fg: #17202a; --muted: #5b6573; --line: #ccd3dc; --panel: #ffffff; --code-bg: #edf2f7; --link: #145f9a; --ok: #176b47; --warn: #8a5a00; --bad: #9c2f2f; }}
     body {{ margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--fg); line-height: 1.5; }}
     main {{ max-width: 1120px; margin: 0 auto; padding: 28px 18px 56px; }}
     header {{ border-bottom: 1px solid var(--line); padding-bottom: 18px; margin-bottom: 24px; }}
     h1 {{ margin: 0 0 8px; font-size: clamp(1.8rem, 4vw, 3rem); }}
     h2 {{ margin-top: 30px; font-size: 1.25rem; }}
     .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }}
-    .card {{ border: 1px solid var(--line); border-left-width: 5px; border-radius: 8px; padding: 14px; background: color-mix(in srgb, canvas 90%, transparent); }}
+    .card {{ border: 1px solid var(--line); border-left-width: 5px; border-radius: 8px; padding: 14px; background: var(--panel); color: var(--fg); }}
     .ok {{ border-left-color: var(--ok); }}
     .warn {{ border-left-color: var(--warn); }}
     .bad {{ border-left-color: var(--bad); }}
-    code, pre {{ background: color-mix(in srgb, canvasText 8%, transparent); border-radius: 6px; }}
+    code, pre {{ background: var(--code-bg); color: var(--fg); border-radius: 6px; }}
     code {{ padding: 2px 4px; overflow-wrap: anywhere; }}
     pre {{ padding: 12px; overflow-x: auto; }}
     table {{ width: 100%; border-collapse: collapse; }}
     th, td {{ text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); padding: 10px; }}
-    a {{ color: LinkText; }}
+    a {{ color: var(--link); }}
     .downloads a {{ display: inline-block; margin: 0 10px 10px 0; }}
   </style>
 </head>
@@ -188,7 +188,7 @@ rows = "\n".join(f"<tr><th>{html.escape(p)}</th><td>{html.escape(d)}</td></tr>" 
 print(f"""<!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Firewall preflight</title>
-<style>body{{font-family:system-ui,sans-serif;max-width:860px;margin:0 auto;padding:28px 18px;line-height:1.5}}table{{border-collapse:collapse;width:100%}}th,td{{border-bottom:1px solid #ccd3dc;padding:10px;text-align:left}}code{{background:#eef1f5;padding:2px 4px;border-radius:4px}}</style></head>
+<style>:root{{color-scheme:light}}body{{font-family:system-ui,sans-serif;max-width:860px;margin:0 auto;padding:28px 18px;line-height:1.5;background:#f7f8fa;color:#17202a}}table{{border-collapse:collapse;width:100%;background:#fff}}th,td{{border-bottom:1px solid #ccd3dc;padding:10px;text-align:left}}code{{background:#edf2f7;color:#17202a;padding:2px 4px;border-radius:4px}}a{{color:#145f9a}}</style></head>
 <body>
 <h1>Firewall preflight</h1>
 <p>The appliance configures UFW on the server. If you attach a Linode Cloud Firewall, allow the same ports there too.</p>
