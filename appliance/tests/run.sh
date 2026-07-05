@@ -9,6 +9,7 @@ tests=(
   "$SCRIPT_DIR/test-tlsa-generation.sh"
   "$SCRIPT_DIR/test-hns-resource-json.sh"
   "$SCRIPT_DIR/test-zone-render.sh"
+  "$SCRIPT_DIR/test-wallet-instructions.sh"
 )
 
 for test in "${tests[@]}"; do

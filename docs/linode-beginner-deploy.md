@@ -13,6 +13,14 @@ This path is for a user who wants Linode/Akamai to bill them directly and wants 
 7. Submit the HNS update yourself.
 8. Return to the dashboard after confirmation and check verification status.
 
+## StackScript wallet fields
+
+The StackScript asks for public, non-secret hsd wallet routing fields so the generated `hsw-rpc` command points at the right local wallet.
+
+Use `hsd_wallet_id=primary` unless your owner wallet appears in `hsw-cli wallets` under a different id. If `recovered2` is an account inside a wallet, put the wallet id in `hsd_wallet_id` and put `recovered2` in `hsd_account_name`.
+
+Do not put a wallet seed, private key, or wallet password in either field.
+
 ## What the appliance never asks for
 
 Do not paste these into the UI, StackScript UDF fields, SSH session, or dashboard:

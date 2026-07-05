@@ -332,18 +332,26 @@ function LinodeDeployCard(props: {
   domainInput: string;
   domainType: DomainType;
   enableIpv6: boolean;
+  hsdAccountName: string;
+  hsdWalletId: string;
   onEnableIpv6Change: (value: boolean) => void;
+  onHsdAccountNameChange: (value: string) => void;
+  onHsdWalletIdChange: (value: string) => void;
   onWalletStyleChange: (value: DeploymentWalletStyle) => void;
   t: LocaleText;
   walletStyle: DeploymentWalletStyle;
 }) {
   const label = deploymentHnsLabel(props.domainInput);
   const hnsName = label ? `${label}/` : '<your-hns-name/>';
+  const hsdWalletId = props.hsdWalletId.trim() || 'primary';
+  const hsdAccountName = props.hsdAccountName.trim();
   const udfValues = [
     `hns_name=${hnsName}`,
     'site_title=HNS DANE Site',
     'deployment_mode=single-node',
     `wallet_style=${props.walletStyle}`,
+    `hsd_wallet_id=${hsdWalletId}`,
+    `hsd_account_name=${hsdAccountName}`,
     `enable_ipv6=${props.enableIpv6 ? 'yes' : 'no'}`
   ].join('\n');
   const disabledReason = props.domainType !== 'hns'
@@ -379,6 +387,22 @@ function LinodeDeployCard(props: {
             <option value="bob">Bob Wallet</option>
             <option value="hsd-cli">hsd-cli / hsw-rpc</option>
           </select>
+        </label>
+        <label>
+          <span>hsd wallet id</span>
+          <input
+            value={props.hsdWalletId}
+            onChange={(event) => props.onHsdWalletIdChange(event.target.value)}
+            placeholder="primary"
+          />
+        </label>
+        <label>
+          <span>hsd account</span>
+          <input
+            value={props.hsdAccountName}
+            onChange={(event) => props.onHsdAccountNameChange(event.target.value)}
+            placeholder="optional, e.g. recovered2"
+          />
         </label>
         <label className="checkbox-row">
           <input
@@ -423,6 +447,8 @@ function App() {
   const [dnskeyInput, setDnskeyInput] = useState(urlPrefill.dnskeyInput);
   const [dnsServerPreset, setDnsServerPreset] = useState<DnsServerPreset>(urlPrefill.dnsServerPreset);
   const [deploymentWalletStyle, setDeploymentWalletStyle] = useState<DeploymentWalletStyle>('generic');
+  const [deploymentHsdWalletId, setDeploymentHsdWalletId] = useState('primary');
+  const [deploymentHsdAccountName, setDeploymentHsdAccountName] = useState('');
   const [deploymentEnableIpv6, setDeploymentEnableIpv6] = useState(false);
   const [touchedFields, setTouchedFields] = useState<TouchedFields>({});
   const [result, setResult] = useState<BootstrapResult | null>(null);
@@ -583,7 +609,11 @@ function App() {
         domainInput={domainInput}
         domainType={domainType}
         enableIpv6={deploymentEnableIpv6}
+        hsdAccountName={deploymentHsdAccountName}
+        hsdWalletId={deploymentHsdWalletId}
         onEnableIpv6Change={setDeploymentEnableIpv6}
+        onHsdAccountNameChange={setDeploymentHsdAccountName}
+        onHsdWalletIdChange={setDeploymentHsdWalletId}
         onWalletStyleChange={setDeploymentWalletStyle}
         t={t}
         walletStyle={deploymentWalletStyle}

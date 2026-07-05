@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 usage() {
   cat >&2 <<'EOF'
-Usage: render-linode-stackscript.sh --sha256 SHA256 [--version v0.1.0]
+Usage: render-linode-stackscript.sh --sha256 SHA256 [--version v0.1.1]
 
 Writes the release-pinned StackScript to stdout.
 EOF
@@ -27,6 +27,6 @@ done
 }
 
 sed \
-  -e "s/APPLIANCE_VERSION=\"v0.1.0\"/APPLIANCE_VERSION=\"${version}\"/" \
+  -e "s/APPLIANCE_VERSION=\"v0.1.1\"/APPLIANCE_VERSION=\"${version}\"/" \
   -e "s/APPLIANCE_ARCHIVE_SHA256=\"REPLACE_WITH_RELEASE_TARBALL_SHA256\"/APPLIANCE_ARCHIVE_SHA256=\"${sha256}\"/" \
   stackscripts/linode/hns-dane-appliance-bootstrap.sh

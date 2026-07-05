@@ -11,8 +11,15 @@ source "$SCRIPT_DIR/detect-ip.sh"
 
 usage() {
   cat >&2 <<'EOF'
-Usage: generate-config.sh --hns-name NAME --site-title TITLE --deployment-mode MODE --wallet-style STYLE --enable-ipv6 yes|no
+Usage: generate-config.sh --hns-name NAME --site-title TITLE --deployment-mode MODE --wallet-style STYLE --hsd-wallet-id ID --hsd-account-name NAME --enable-ipv6 yes|no
 EOF
+}
+
+validate_hsd_selector() {
+  local field="$1"
+  local value="$2"
+  [[ -z "$value" ]] && return 0
+  [[ "$value" =~ ^[A-Za-z0-9._-]{1,64}$ ]] || fail "$field may contain only letters, numbers, dot, underscore, and hyphen."
 }
 
 generate_config() {
@@ -20,6 +27,8 @@ generate_config() {
   local site_title="HNS DANE Site"
   local deployment_mode="single-node"
   local wallet_style="generic"
+  local hsd_wallet_id="primary"
+  local hsd_account_name=""
   local enable_ipv6="no"
 
   while [[ $# -gt 0 ]]; do
@@ -28,6 +37,8 @@ generate_config() {
       --site-title) site_title="${2:-}"; shift 2 ;;
       --deployment-mode) deployment_mode="${2:-}"; shift 2 ;;
       --wallet-style) wallet_style="${2:-}"; shift 2 ;;
+      --hsd-wallet-id) hsd_wallet_id="${2:-}"; shift 2 ;;
+      --hsd-account-name) hsd_account_name="${2:-}"; shift 2 ;;
       --enable-ipv6) enable_ipv6="${2:-}"; shift 2 ;;
       -h|--help) usage; return 0 ;;
       *) usage; fail "Unknown generate-config option: $1" ;;
@@ -49,6 +60,9 @@ generate_config() {
     generic|bob|hsd-cli) ;;
     *) fail "Unsupported wallet style: $wallet_style" ;;
   esac
+  hsd_wallet_id="${hsd_wallet_id:-primary}"
+  validate_hsd_selector "--hsd-wallet-id" "$hsd_wallet_id"
+  validate_hsd_selector "--hsd-account-name" "$hsd_account_name"
   case "$enable_ipv6" in
     yes|no) ;;
     *) fail "--enable-ipv6 must be yes or no" ;;
@@ -97,6 +111,8 @@ generate_config() {
     --arg label "$label" \
     --arg zone "$zone" \
     --arg walletStyle "$wallet_style" \
+    --arg hsdWalletId "$hsd_wallet_id" \
+    --arg hsdAccountName "$hsd_account_name" \
     --arg publicIPv4 "$public_ipv4" \
     --arg siteTitle "$site_title" \
     --arg adminTokenFile "$admin_token_file" \
@@ -125,7 +141,9 @@ generate_config() {
         label: $label,
         zone: $zone,
         resourceMode: "delegated-dns",
-        walletStyle: $walletStyle
+        walletStyle: $walletStyle,
+        hsdWalletId: $hsdWalletId,
+        hsdAccountName: $hsdAccountName
       },
       site: {
         title: $siteTitle

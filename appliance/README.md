@@ -25,8 +25,12 @@ sudo appliance/install.sh \
   --site-title "HNS DANE Site" \
   --deployment-mode single-node \
   --wallet-style generic \
+  --hsd-wallet-id primary \
+  --hsd-account-name "" \
   --enable-ipv6 no
 ```
+
+`--hsd-wallet-id` and `--hsd-account-name` are non-secret hints used only when rendering local hsd wallet commands. Leave the account empty unless the name is owned by a non-default hsd account.
 
 The generated canonical config is:
 

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-APPLIANCE_VERSION="${APPLIANCE_VERSION:-v0.1.0}"
+APPLIANCE_VERSION="${APPLIANCE_VERSION:-v0.1.1}"
 APPLIANCE_REPO="${APPLIANCE_REPO:-denuoweb/dane-record-generator}"
 INSTALL_LIB_DIR="${INSTALL_LIB_DIR:-/usr/local/lib/hns-dane-appliance}"
 
 usage() {
   cat >&2 <<'EOF'
-Usage: install.sh --hns-name NAME --site-title TITLE --deployment-mode MODE --wallet-style STYLE --enable-ipv6 yes|no
+Usage: install.sh --hns-name NAME --site-title TITLE --deployment-mode MODE --wallet-style STYLE --hsd-wallet-id ID --hsd-account-name NAME --enable-ipv6 yes|no
 EOF
 }
 
@@ -37,6 +37,8 @@ hns_name=""
 site_title="HNS DANE Site"
 deployment_mode="single-node"
 wallet_style="generic"
+hsd_wallet_id="primary"
+hsd_account_name=""
 enable_ipv6="no"
 skip_packages=0
 
@@ -46,6 +48,8 @@ while [[ $# -gt 0 ]]; do
     --site-title) site_title="${2:-}"; shift 2 ;;
     --deployment-mode) deployment_mode="${2:-}"; shift 2 ;;
     --wallet-style) wallet_style="${2:-}"; shift 2 ;;
+    --hsd-wallet-id) hsd_wallet_id="${2:-}"; shift 2 ;;
+    --hsd-account-name) hsd_account_name="${2:-}"; shift 2 ;;
     --enable-ipv6) enable_ipv6="${2:-}"; shift 2 ;;
     --skip-package-install) skip_packages=1; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -81,6 +85,8 @@ fi
   --site-title "$site_title" \
   --deployment-mode "$deployment_mode" \
   --wallet-style "$wallet_style" \
+  --hsd-wallet-id "$hsd_wallet_id" \
+  --hsd-account-name "$hsd_account_name" \
   --enable-ipv6 "$enable_ipv6"
 "$SCRIPT_DIR/harden-server.sh"
 "$SCRIPT_DIR/configure-firewall.sh"
