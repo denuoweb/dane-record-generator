@@ -28,6 +28,9 @@ status = json.loads(status_path.read_text()) if status_path.exists() else {
 def e(value):
     return html.escape("" if value is None else str(value), quote=True)
 
+def shell_quote(value):
+    return "'" + str(value).replace("'", "'\"'\"'") + "'"
+
 label = cfg["hns"]["label"]
 zone = cfg["hns"]["zone"]
 title = cfg.get("site", {}).get("title") or "HNS DANE Site"
@@ -37,6 +40,8 @@ ns = cfg["nameservers"][0]["name"]
 ds = cfg.get("dnssec", {}).get("ds") or {}
 tlsa = cfg.get("tlsa", {})
 records = resource.get("records", [])
+hsd_wallet_id = cfg.get("hns", {}).get("hsdWalletId") or "primary"
+hsd_account_name = cfg.get("hns", {}).get("hsdAccountName") or ""
 
 def record_rows():
     rows = []
@@ -67,7 +72,16 @@ def local_status_cards():
 
 digest = ds.get("digest", "")
 wallet_json = json.dumps(resource, indent=2)
+wallet_json_compact = json.dumps(resource, separators=(",", ":"))
 status_message = status.get("hns", {}).get("message", "Submit the generated records from your HNS wallet, then re-check.")
+account_arg = f" {hsd_account_name}" if hsd_account_name else ""
+wallet_cli_commands = "\n".join([
+    f"hsd-rpc getnameinfo {label} true",
+    "hsw-cli wallets",
+    f"hsw-cli --id {hsd_wallet_id} account list",
+    f"hsw-rpc --id {hsd_wallet_id} getnameinfo {label}",
+    f"hsw-rpc --id {hsd_wallet_id} sendupdate {label} {shell_quote(wallet_json_compact)}{account_arg}",
+])
 
 print(f"""<!doctype html>
 <html lang="en">
@@ -123,6 +137,12 @@ print(f"""<!doctype html>
     <h2>HNS Wallet Records To Submit</h2>
     <table><tbody>{record_rows()}</tbody></table>
     <pre>{e(wallet_json)}</pre>
+  </section>
+
+  <section>
+    <h2>Wallet CLI Submit Commands</h2>
+    <p>Run these on the wallet machine that owns <code>{e(label)}/</code>. The appliance does not receive wallet seeds, passwords, or private keys.</p>
+    <pre>{e(wallet_cli_commands)}</pre>
   </section>
 
   <section>
