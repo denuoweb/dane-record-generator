@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added an experimental HNS Browser Capsule TXT output that reuses TLSA 3 1 1 SPKI hashes and emits compact HSD `TXT` resource JSON for direct browser tests.
 - Replaced raw browser base64 decode errors with field-specific PEM/DNSKEY validation messages.
 - Clarified the DANE certificate/public-key field as the TLSA source and shows its how-to instructions whenever TLSA is missing.
 - Added production DANE/DNSSEC guidance for validation, authoritative nameserver hardening, DNSSEC lifecycle, TLSA rollover, client enforcement, service scope, and pasted-input correctness.

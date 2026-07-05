@@ -13,6 +13,7 @@ The app keeps the workflow simple:
 ## Main outputs
 
 - **HNS wallet / registrar**: NS, GLUE, DS, SYNTH records as appropriate.
+- **Experimental HNS browser capsule**: compact HNS `TXT` payload for the Denuo browser prototype to synthesize A/AAAA, HTTPS, and TLSA without delegated DNS.
 - **Authoritative DNS server**: tabbed starter config for hosted DNS panels, Generic zone file, BIND, Windows Server DNS, PowerDNS, Knot, or NSD, including NS, A, AAAA, and TLSA records.
 - **Verify commands**: `dig`/`delv` checks.
 - **Integrator JSON**: optional machine-readable output for wallets and future APIs.
@@ -48,6 +49,16 @@ dane. 3600 IN NS _pc0722g._synth.
 dane. 3600 IN A 203.0.113.20
 _443._tcp.dane. 3600 IN TLSA 3 1 1 9B2C...A811
 ```
+
+### Experimental HNS browser capsule
+
+For simple HNS browser tests, the generator also emits a compact TXT capsule that can live directly in the HNS name resource:
+
+```text
+hnsb=1;host=@;a=203.0.113.20;alpn=h2,h3;tlsa=3,1,1,9b2c...a811
+```
+
+This is not delegated DNS and does not change the meaning of HNS `GLUE` or `SYNTH`. It is an explicit browser prototype record for direct apex or single-label child hosts. Keep it under the HNS resource budget and advertise `h3` only when the HTTPS server actually supports HTTP/3.
 
 ### ICANN delegated DNSSEC mode
 

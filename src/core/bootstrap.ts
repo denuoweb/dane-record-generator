@@ -36,6 +36,10 @@ function estimateHnsResourceSize(records: HnsParentRecordDraft[]): number {
   return new TextEncoder().encode(JSON.stringify({ records })).length;
 }
 
+function estimateHnsResourcePayloadSize(records: unknown[]): number {
+  return new TextEncoder().encode(JSON.stringify({ records })).length;
+}
+
 function dsToDraft(ds: DsRecord): HnsParentRecordDraft {
   return {
     type: 'DS',
@@ -362,12 +366,63 @@ function buildAuthoritativeDnsOptions(baseInput: Omit<ServerPresetInput, 'preset
   })));
 }
 
-function buildSections(result: Omit<BootstrapResult, 'sections'>): OutputSection[] {
+function buildHnsBrowserCapsuleOutput(input: BootstrapInput, domain: string, tlsaRecord?: string): { lines: GeneratedLine[]; sizeBytes?: number } {
+  if (input.domainType !== 'hns') return { lines: [] };
+
+  const fields = ['hnsb=1', 'host=@'];
+  if (nonEmpty(input.websiteIpv4)) fields.push(`a=${input.websiteIpv4}`);
+  if (nonEmpty(input.websiteIpv6)) fields.push(`aaaa=${input.websiteIpv6}`);
+  fields.push('alpn=h2,h3');
+
+  const tlsa = capsuleTlsaValue(tlsaRecord);
+  fields.push(`tlsa=${tlsa ?? '3,1,1,<spki-sha256>'}`);
+  const capsule = fields.join(';');
+  const resourceRecord = { type: 'TXT', txt: [capsule] };
+  const resourceJson = JSON.stringify({ records: [resourceRecord] });
+  const sizeBytes = estimateHnsResourcePayloadSize([resourceRecord]);
+  const name = rootless(domain);
+
+  return {
+    sizeBytes,
+    lines: [
+      {
+        value: [
+          `TXT "${capsule}"`,
+          '',
+          'HSD resource record JSON:',
+          JSON.stringify(resourceRecord),
+          '',
+          'Standalone resource JSON:',
+          resourceJson,
+          '',
+          '# Merge this TXT record with any existing HNS resource records before broadcasting.',
+          `hsw-cli rpc sendupdate ${shellQuote(name)} ${shellQuote(resourceJson)}`
+        ].join('\n'),
+        explanation: 'Experimental HNS Browser Capsule TXT. It lets supporting browsers synthesize apex A/AAAA, HTTPS/SVCB ALPN, and _443._tcp TLSA from HNS-proven TXT data. Keep it compact, and only advertise h3 when the web server actually supports HTTP/3.'
+      }
+    ]
+  };
+}
+
+function capsuleTlsaValue(tlsaRecord?: string): string | undefined {
+  if (!tlsaRecord) return undefined;
+  const match = /\sIN\sTLSA\s+(\d+)\s+(\d+)\s+(\d+)\s+([0-9A-Fa-f]+)\s*$/i.exec(tlsaRecord);
+  if (!match) return undefined;
+  const [, usage, selector, matchingType, associationData] = match;
+  if (!usage || !selector || !matchingType || !associationData) return undefined;
+  if (usage !== '3' || selector !== '1' || matchingType !== '1') return undefined;
+  return `3,1,1,${associationData.toLowerCase()}`;
+}
+
+function buildSections(result: Omit<BootstrapResult, 'sections'>, capsuleRecords: GeneratedLine[] = []): OutputSection[] {
   const sections: OutputSection[] = [
     { id: 'parent', title: result.parentTitle, audience: 'parent', lines: result.parentRecords },
     { id: 'authoritative', title: result.authoritativeTitle, audience: 'authoritative', lines: result.authoritativeRecords }
   ];
 
+  if (capsuleRecords.length > 0) {
+    sections.push({ id: 'capsule', title: 'HNS Browser Capsule TXT', audience: 'parent', lines: capsuleRecords, compact: true });
+  }
   sections.push({ id: 'verify', title: result.verificationTitle, audience: 'verify', lines: result.verificationCommands, compact: true });
   sections.push({ id: 'web', title: 'Web server note', audience: 'web', lines: result.webServerNotes, compact: true });
   sections.push({ id: 'integrator', title: result.integrationTitle, audience: 'integrator', lines: result.integrationRecords });
@@ -560,11 +615,18 @@ export async function generateBootstrap(input: BootstrapInput): Promise<Bootstra
   const quickSteps = buildQuickSteps(input, effectiveMode, hasDs, hasTlsa);
   const verificationCommands = buildVerificationCommands(input, effectiveMode, normalizedDomain, ns, owner);
   const integrationRecords = buildIntegrationRecord(parentDraft, input, effectiveMode, parentRecords, authoritativeRecords);
+  const capsuleOutput = buildHnsBrowserCapsuleOutput(input, normalizedDomain, tlsaRecord);
   authoritativeRecords.push(...authoritativeDnsOptions);
   const hnsResourceSizeBytes = input.domainType === 'hns' ? estimateHnsResourceSize(parentDraft) : undefined;
 
   if (input.domainType === 'hns' && hnsResourceSizeBytes !== undefined && hnsResourceSizeBytes > 512) {
     notices.push(notice('warning', `Estimated HNS parent-resource draft is ${hnsResourceSizeBytes} bytes. Keep HNS name resources small.`));
+  }
+  if (input.domainType === 'hns' && capsuleOutput.sizeBytes !== undefined && capsuleOutput.sizeBytes > 512) {
+    notices.push(notice('warning', `Estimated HNS browser capsule resource is ${capsuleOutput.sizeBytes} bytes, above the 512-byte HNS resource limit.`));
+  }
+  if (input.domainType === 'hns' && tlsaRecord && !capsuleTlsaValue(tlsaRecord)) {
+    notices.push(notice('warning', 'HNS browser capsule output needs TLSA 3 1 1. The current TLSA parameters are not capsule-compatible, so the capsule output uses a placeholder.'));
   }
 
   const resultWithoutSections: Omit<BootstrapResult, 'sections'> = {
@@ -601,6 +663,6 @@ export async function generateBootstrap(input: BootstrapInput): Promise<Bootstra
 
   return {
     ...resultWithoutSections,
-    sections: buildSections(resultWithoutSections)
+    sections: buildSections(resultWithoutSections, capsuleOutput.lines)
   };
 }

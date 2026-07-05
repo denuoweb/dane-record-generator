@@ -237,6 +237,11 @@ describe('bootstrap generator', () => {
     expect(result.webServerNotes.some((line) => line.value.includes('current and next TLSA'))).toBe(true);
     expect(result.webServerNotes.some((line) => line.value.includes('ordinary HTTPS clients may ignore'))).toBe(true);
     expect(result.quickSteps.length).toBeGreaterThan(3);
+    const capsule = result.sections.find((section) => section.id === 'capsule');
+    expect(capsule?.title).toBe('HNS Browser Capsule TXT');
+    expect(capsule?.lines[0]?.value).toContain('hnsb=1;host=@;a=203.0.113.20;alpn=h2,h3;tlsa=3,1,1,');
+    expect(capsule?.lines[0]?.value).toContain('"type":"TXT","txt":["hnsb=1;host=@;a=203.0.113.20;alpn=h2,h3;tlsa=3,1,1,');
+    expect(capsule?.lines[0]?.value).toContain('Merge this TXT record with any existing HNS resource records');
   });
 
   it('generates HNS SYNTH nameserver outputs', async () => {
