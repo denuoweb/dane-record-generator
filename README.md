@@ -30,7 +30,7 @@ This repo now includes an early production-MVP appliance path for beginners who 
 - private TLS/DNSSEC material and backups stay on the VPS, outside `/var/www`.
 - two-node reliable mode is documented as a future assisted flow and intentionally not claimed complete.
 
-Start with [Linode Beginner Deploy](docs/linode-beginner-deploy.md) and [Appliance README](appliance/README.md). The appliance does not take payment, touch ICANN registrars, request wallet seeds, submit HNS transactions, or require Terraform/OpenTofu for the beginner path.
+Start with [Linode Beginner Deploy](docs/linode-beginner-deploy.md), [Publish The Linode StackScript](docs/linode-stackscript-publish.md), and [Appliance README](appliance/README.md). The appliance does not take payment, touch ICANN registrars, request wallet seeds, submit HNS transactions, or require Terraform/OpenTofu for the beginner path.
 
 ## Supported modes
 

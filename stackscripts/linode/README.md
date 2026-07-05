@@ -7,3 +7,5 @@ Before publishing the StackScript, replace `REPLACE_WITH_RELEASE_TARBALL_SHA256`
 The StackScript UDF values must not contain wallet seeds, private keys, Linode API tokens, cloud API tokens, registrar credentials, or payment data.
 
 For v0.1, choose `single-node`. The `primary-node` and `secondary-node` values are reserved for the documented future two-node flow and the installer exits clearly if either is selected.
+
+Use `scripts/publish-linode-stackscript.sh` to publish this StackScript from a release hash. After publishing, build the web app with `VITE_LINODE_STACKSCRIPT_ID=<id>` so the UI can show an `Open Linode` button.

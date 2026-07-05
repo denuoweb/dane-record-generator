@@ -6,7 +6,7 @@ This path is for a user who wants Linode/Akamai to bill them directly and wants 
 
 1. Open the project UI and enter one Handshake name, such as `denuoweb` or `denuoweb/`.
 2. Choose the Linode/Akamai deployment path.
-3. Create a Debian 12 Linode with the pinned HNS DANE StackScript.
+3. Create a Debian 12 Linode with the pinned HNS DANE StackScript. If the project maintainer has published the StackScript, use the app's `Open Linode` button.
 4. Wait for the StackScript to finish.
 5. Open the dashboard at the server IPv4 address.
 6. Copy the GLUE and DS records into the wallet that owns the HNS name.

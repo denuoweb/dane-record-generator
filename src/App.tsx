@@ -22,7 +22,10 @@ const WEB_ADMIN_GUIDE_URL = `${GITHUB_REPOSITORY_URL}/blob/main/docs/WEB_ADMIN_G
 const OS_QUICK_STARTS_URL = `${WEB_ADMIN_GUIDE_URL}#self-hosted-os-quick-starts`;
 const LINODE_BEGINNER_DEPLOY_URL = `${GITHUB_REPOSITORY_URL}/blob/main/docs/linode-beginner-deploy.md`;
 const LINODE_PREFLIGHT_URL = `${GITHUB_REPOSITORY_URL}/blob/main/docs/linode-firewall-preflight.md`;
+const LINODE_PUBLISH_URL = `${GITHUB_REPOSITORY_URL}/blob/main/docs/linode-stackscript-publish.md`;
 const LINODE_STACKSCRIPT_URL = `${GITHUB_REPOSITORY_URL}/blob/main/stackscripts/linode/hns-dane-appliance-bootstrap.sh`;
+const PUBLISHED_LINODE_STACKSCRIPT_ID = String(import.meta.env.VITE_LINODE_STACKSCRIPT_ID ?? '').trim();
+const PUBLISHED_LINODE_STACKSCRIPT_URL = PUBLISHED_LINODE_STACKSCRIPT_ID ? `https://cloud.linode.com/stackscripts/${encodeURIComponent(PUBLISHED_LINODE_STACKSCRIPT_ID)}` : '';
 const CERTIFICATE_PLACEHOLDER = `-----BEGIN CERTIFICATE-----
 ...
 -----END CERTIFICATE-----
@@ -348,6 +351,9 @@ function LinodeDeployCard(props: {
     : !label
       ? 'Enter one HNS label such as denuoweb or denuoweb/.'
       : null;
+  const publicationReason = PUBLISHED_LINODE_STACKSCRIPT_URL
+    ? null
+    : 'Maintainer setup needed: publish the StackScript to Linode and build with VITE_LINODE_STACKSCRIPT_ID.';
 
   return (
     <section className={`deploy-card${disabledReason ? ' deploy-card-warn' : ''}`} aria-label="Linode Akamai deployment">
@@ -361,6 +367,7 @@ function LinodeDeployCard(props: {
         <p className="deploy-safety">
           No wallet seed, private key, Linode API token, registrar login, or payment data belongs in this project.
         </p>
+        {publicationReason && <p className="deploy-warning">{publicationReason}</p>}
         {disabledReason && <p className="deploy-warning">{disabledReason}</p>}
       </div>
 
@@ -383,6 +390,9 @@ function LinodeDeployCard(props: {
         </label>
         <pre className="deploy-udf">{udfValues}</pre>
         <div className="deploy-actions">
+          {PUBLISHED_LINODE_STACKSCRIPT_URL
+            ? <a className="button-link" href={PUBLISHED_LINODE_STACKSCRIPT_URL} target="_blank" rel="noreferrer">Open Linode</a>
+            : <a className="button-link" href={LINODE_PUBLISH_URL} target="_blank" rel="noreferrer">Publish setup</a>}
           <CopyButton text={udfValues} t={props.t} />
           <a className="button-link" href={LINODE_BEGINNER_DEPLOY_URL} target="_blank" rel="noreferrer">Guide</a>
           <a className="button-link secondary" href={LINODE_STACKSCRIPT_URL} target="_blank" rel="noreferrer">StackScript</a>
