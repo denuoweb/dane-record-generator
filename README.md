@@ -18,6 +18,20 @@ The app keeps the workflow simple:
 - **Verify commands**: `dig`/`delv` checks.
 - **Integrator JSON**: optional machine-readable output for wallets and future APIs.
 
+## Linode/Akamai appliance path
+
+This repo now includes an early production-MVP appliance path for beginners who want a self-hosted authoritative DNSSEC + DANE server on a Linode they own:
+
+- `stackscripts/linode/hns-dane-appliance-bootstrap.sh` is a thin, hash-verified StackScript bootstrapper.
+- `appliance/install.sh` is the real versioned installer.
+- `/etc/hns-dane-appliance/config.json` is the server source of truth.
+- Knot DNS signs the authoritative zone with manual parent-facing rollover.
+- nginx serves a static dashboard with public GLUE, DS, TLSA, wallet instructions, and verification status.
+- private TLS/DNSSEC material and backups stay on the VPS, outside `/var/www`.
+- two-node reliable mode is documented as a future assisted flow and intentionally not claimed complete.
+
+Start with [Linode Beginner Deploy](docs/linode-beginner-deploy.md) and [Appliance README](appliance/README.md). The appliance does not take payment, touch ICANN registrars, request wallet seeds, submit HNS transactions, or require Terraform/OpenTofu for the beginner path.
+
 ## Supported modes
 
 ### HNS delegated DNS mode

@@ -8,6 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:appliance": "bash appliance/tests/run.sh",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },

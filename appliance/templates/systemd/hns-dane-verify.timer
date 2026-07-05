@@ -1,0 +1,11 @@
+[Unit]
+Description=Run HNS DANE appliance verification periodically
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Unit=hns-dane-verify.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,14 @@
+[Unit]
+Description=HNS DANE appliance verification
+Documentation=file:/usr/local/lib/hns-dane-appliance/README.md
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/hns-dane verify
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/var/www/hns-dane /var/log/hns-dane-appliance /root/hns-dane-appliance /etc/hns-dane-appliance
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=true
+MemoryDenyWriteExecute=true

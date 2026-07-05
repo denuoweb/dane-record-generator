@@ -1,0 +1,17 @@
+$ORIGIN {{ZONE}}
+$TTL 3600
+
+@ IN SOA {{NS}} hostmaster.{{ZONE}} (
+  {{SERIAL}} ; serial
+  3600       ; refresh
+  900        ; retry
+  1209600    ; expire
+  3600       ; minimum
+)
+
+@ IN NS {{NS}}
+ns1 IN A {{IPV4}}
+@ IN A {{IPV4}}
+www IN A {{IPV4}}
+_443._tcp IN TLSA 3 1 1 {{TLSA}}
+@ IN TXT "hns-dane-appliance={{VERSION}}"

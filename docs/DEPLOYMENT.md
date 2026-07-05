@@ -12,10 +12,31 @@ npm run dev
 ```bash
 npm ci
 npm test
+npm run test:appliance
 npm run build
 ```
 
 The static site is emitted to `dist/`.
+
+## Linode/Akamai appliance
+
+The appliance path lives alongside the static app:
+
+```text
+appliance/
+stackscripts/linode/
+docs/linode-beginner-deploy.md
+```
+
+The StackScript is intentionally thin and fails closed until a real tagged release archive SHA256 replaces `REPLACE_WITH_RELEASE_TARBALL_SHA256`.
+
+For local appliance development, run:
+
+```bash
+npm run test:appliance
+```
+
+For a real VPS install, use Debian 12 and follow [Linode Beginner Deploy](linode-beginner-deploy.md).
 
 ## Static hosting
 
