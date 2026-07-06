@@ -24,6 +24,6 @@ assert_eq "DS" "$(jq -r '.records[3].type' "$HNS_DANE_OUTPUT_DIR/hns-resource.js
 assert_eq "12345" "$(jq -r '.records[3].keyTag' "$HNS_DANE_OUTPUT_DIR/hns-resource.json")" "DS key tag"
 assert_eq "4" "$(jq -r '.records | length' "$HNS_DANE_OUTPUT_DIR/hns-resource.json")" "record count"
 assert_file_not_contains "hnsdns=1" "$HNS_DANE_OUTPUT_DIR/hns-resource.json" "experimental DoH TXT removed"
-assert_file_not_contains "hnsb=1" "$HNS_DANE_OUTPUT_DIR/hns-resource.json" "legacy capsule removed"
+assert_file_not_contains "hnsb=1" "$HNS_DANE_OUTPUT_DIR/hns-resource.json" "capsule experiment removed"
 
 printf 'ok - hns-resource-json\n'

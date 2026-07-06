@@ -39,7 +39,7 @@ assert_file_contains "RFC 9461 DoH discovery" "$HNS_DANE_ROOT/README-FIRST.txt" 
 assert_file_contains "_dns.ns1.denuoweb. IN SVCB 1 ns1.denuoweb. alpn=h2 dohpath=/dns-query{?dns}" "$HNS_DANE_ROOT/README-FIRST.txt" "ssh readme shows authoritative DoH SVCB"
 assert_file_contains "detected public IPv4" "$HNS_DANE_ROOT/README-FIRST.txt" "ssh readme explains detected IP"
 assert_file_contains "IPv4: 203.0.113.10" "$HNS_DANE_ROOT/README-FIRST.txt" "ssh readme shows detected IPv4"
-assert_file_not_contains "hnsb=1" "$HNS_DANE_OUTPUT_DIR/wallet-hsd-cli.md" "legacy capsule removed from wallet instructions"
+assert_file_not_contains "hnsb=1" "$HNS_DANE_OUTPUT_DIR/wallet-hsd-cli.md" "capsule experiment removed from wallet instructions"
 assert_file_not_contains "hnsdns=1" "$HNS_DANE_OUTPUT_DIR/wallet-hsd-cli.md" "experimental DoH TXT removed from wallet instructions"
 
 printf 'ok - wallet-instructions\n'
