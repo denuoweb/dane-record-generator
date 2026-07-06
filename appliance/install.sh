@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 APPLIANCE_VERSION="${APPLIANCE_VERSION:-v0.2.1}"
-APPLIANCE_REPO="${APPLIANCE_REPO:-denuoweb/dane-record-generator}"
+APPLIANCE_REPO="${APPLIANCE_REPO:-denuoweb/hns-dane-bootstrap-generator}"
 INSTALL_LIB_DIR="${INSTALL_LIB_DIR:-/usr/local/lib/hns-dane-appliance}"
 
 usage() {
