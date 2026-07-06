@@ -123,6 +123,28 @@ selected_wallet_path() {
   esac
 }
 
+hns_browser_capsule_from_config() {
+  local ipv4 ipv6 spki_sha256 spki_lower capsule
+  ipv4="$(json_get '.network.publicIPv4')"
+  ipv6="$(json_get '.network.publicIPv6')"
+  spki_sha256="$(json_get '.tls.spkiSha256')"
+
+  [[ -n "$ipv4" ]] || fail "Public IPv4 is missing from config. Rerun generate-config.sh so the appliance can detect its external address."
+  is_valid_ipv4 "$ipv4" || fail "Configured public IPv4 is invalid: $ipv4"
+  if [[ -n "$ipv6" && "$ipv6" != "null" ]]; then
+    is_valid_ipv6 "$ipv6" || fail "Configured public IPv6 is invalid: $ipv6"
+  fi
+  [[ -n "$spki_sha256" ]] || fail "TLS SPKI SHA256 is missing from config. Run generate-tlsa.sh first."
+
+  spki_lower="$(printf '%s' "$spki_sha256" | tr '[:upper:]' '[:lower:]')"
+  capsule="hnsb=1;host=@;a=$ipv4"
+  if [[ -n "$ipv6" && "$ipv6" != "null" ]]; then
+    capsule="${capsule};aaaa=$ipv6"
+  fi
+  capsule="${capsule};alpn=h2,h3;tlsa=3,1,1,$spki_lower"
+  printf '%s\n' "$capsule"
+}
+
 safe_systemctl() {
   if command -v systemctl >/dev/null 2>&1 && [[ "${HNS_DANE_TEST:-0}" != "1" ]]; then
     systemctl "$@" || return 1

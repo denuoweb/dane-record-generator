@@ -9,7 +9,7 @@ render_wallet_instructions() {
   config_required
   [[ -f "$HNS_DANE_OUTPUT_DIR/hns-resource.json" ]] || fail "Missing HNS resource JSON. Run generate-hns-resource.sh first."
 
-  local label ns ipv4 ipv6 key_tag algorithm digest_type digest spki_sha256 capsule resource_json hsd_wallet_id hsd_account_name account_arg
+  local label ns ipv4 ipv6 key_tag algorithm digest_type digest capsule resource_json hsd_wallet_id hsd_account_name account_arg
   label="$(json_get '.hns.label')"
   ns="$(json_get '.nameservers[0].name')"
   ipv4="$(json_get '.network.publicIPv4')"
@@ -18,8 +18,7 @@ render_wallet_instructions() {
   algorithm="$(json_get '.dnssec.ds.algorithm')"
   digest_type="$(json_get '.dnssec.ds.digestType')"
   digest="$(json_get '.dnssec.ds.digest')"
-  spki_sha256="$(json_get '.tls.spkiSha256')"
-  capsule="hnsb=1;host=@;alpn=h2,h3;tlsa=3,1,1,$(printf '%s' "$spki_sha256" | tr '[:upper:]' '[:lower:]')"
+  capsule="$(hns_browser_capsule_from_config)"
   resource_json="$(jq -c . "$HNS_DANE_OUTPUT_DIR/hns-resource.json")"
   hsd_wallet_id="$(json_get '.hns.hsdWalletId')"
   hsd_wallet_id="${hsd_wallet_id:-primary}"

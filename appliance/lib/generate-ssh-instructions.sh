@@ -9,13 +9,21 @@ generate_ssh_instructions() {
   config_required
   ensure_dir 0700 "$HNS_DANE_ROOT"
 
-  local label zone dashboard wallet_path readme profile_note
+  local label zone dashboard wallet_path readme profile_note ipv4 ipv6 ip_family ipv6_line
   label="$(json_get '.hns.label')"
   zone="$(json_get '.hns.zone')"
   dashboard="$(json_get '.dashboard.publicUrl')"
   wallet_path="$(selected_wallet_path)"
+  ipv4="$(json_get '.network.publicIPv4')"
+  ipv6="$(json_get '.network.publicIPv6')"
+  ip_family="IPv4"
+  ipv6_line=""
+  if [[ -n "$ipv6" && "$ipv6" != "null" ]]; then
+    ip_family="IPv4 and IPv6"
+    ipv6_line="  IPv6: ${ipv6}"
+  fi
   readme="$HNS_DANE_ROOT/README-FIRST.txt"
-  profile_note="/etc/profile.d/hns-dane-appliance.sh"
+  profile_note="${HNS_DANE_PROFILE_NOTE:-/etc/profile.d/hns-dane-appliance.sh}"
 
   cat > "$readme" <<EOF
 HNS DANE appliance is installed for: ${label}/
@@ -24,6 +32,9 @@ Open the public dashboard:
   ${dashboard}
 
 The dashboard shows the NS, GLUE, DS, and HNS Browser TXT records to paste into the HNS wallet.
+The generated HNS Browser TXT capsule uses this appliance's detected public ${ip_family}:
+  IPv4: ${ipv4}
+${ipv6_line}
 
 Root-only files:
   Wallet instructions: ${wallet_path}
@@ -46,6 +57,7 @@ If DNS tests fail but Knot is running, check any Linode Cloud Firewall first.
 EOF
   chmod 0600 "$readme"
 
+  ensure_dir 0755 "$(dirname "$profile_note")"
   cat > "$profile_note" <<'EOF'
 if [ "$(id -u)" = "0" ] && [ -r /root/hns-dane-appliance/README-FIRST.txt ]; then
   printf '\nHNS DANE appliance: see /root/hns-dane-appliance/README-FIRST.txt\n'

@@ -62,6 +62,7 @@ make_test_env() {
   export HNS_DANE_NGINX_AVAILABLE="$tmp/nginx/sites-available/hns-dane"
   export HNS_DANE_NGINX_ENABLED="$tmp/nginx/sites-enabled/hns-dane"
   export HNS_DANE_SYSTEMD_DIR="$tmp/systemd"
+  export HNS_DANE_PROFILE_NOTE="$tmp/profile.d/hns-dane-appliance.sh"
 }
 
 seed_config() {
