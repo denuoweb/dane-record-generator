@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- Bumped the Linode StackScript and appliance release pin to `v0.2.0`.
+- Bumped the Linode StackScript and appliance release pin to `v0.2.1`.
+- Updated Vite and Vitest to the latest patch releases and renamed the npm package to `hns-dane-bootstrap-generator`.
 - Set the public Linode StackScript default to `2158182` for `HNS DANE One-Name Server`.
 - Closed appliance HTTP serving on TCP 80 so the dashboard is exposed only through the HTTPS DANE endpoint.
 - Removed stale appliance UFW `80/tcp` allow rules during upgrades.
@@ -32,7 +33,7 @@
 - Added UI localization with a persisted language selector for English, Spanish, French, German, Portuguese, Japanese, Arabic, Persian, and Hebrew.
 - Localized generated guidance, notices, setup-status details, output explanations, web-server notes, and help tips through a result-localization pass.
 
-## 0.3.0
+## 0.2.1
 
 - Refactored the scaffold into a focused first production version.
 - Added output sections for verification commands and optional integrator JSON.

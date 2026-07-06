@@ -1,4 +1,4 @@
-# DANE Record Generator
+# HNS DANE Bootstrap Generator
 
 A focused web app for producing the few records a domain owner needs to connect an HNS or ICANN domain to authoritative DNS, DNSSEC, and DANE/TLSA.
 

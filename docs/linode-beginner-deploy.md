@@ -40,7 +40,7 @@ The VPS generates its own TLS and DNSSEC keys locally. The public dashboard show
 
 ## Beginner mode
 
-Use `single-node` for v0.2.0. It creates:
+Use `single-node` for v0.2.1. It creates:
 
 ```text
 ns1.<name>. -> server IPv4

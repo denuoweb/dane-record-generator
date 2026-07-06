@@ -4,7 +4,7 @@ export const localeText = {
     languageLabel: 'Language',
     hero: {
       eyebrow: 'Need the HNS wallet, registrar, DNSSEC, and TLSA records?',
-      title: 'DANE Record Generator',
+      title: 'HNS DANE Bootstrap Generator',
       standard: 'DNS-based Authentication of Named Entities',
       steps: {
         enter: 'Enter the name, nameserver, server IP, and certificate here.',
@@ -155,7 +155,7 @@ export const localeText = {
     languageLabel: 'Idioma',
     hero: {
       eyebrow: '¿Necesitas registros HNS, registrador, DNSSEC y TLSA?',
-      title: 'Generador de registros DANE',
+      title: 'HNS DANE Bootstrap Generator',
       standard: 'Autenticación basada en DNS de entidades nombradas',
       steps: {
         enter: 'Introduce aquí el nombre, el servidor de nombres, la IP del servidor y el certificado.',
@@ -282,7 +282,7 @@ export const localeText = {
     languageLabel: 'Langue',
     hero: {
       eyebrow: 'Besoin des enregistrements HNS, registrar, DNSSEC et TLSA ?',
-      title: 'Générateur d’enregistrements DANE',
+      title: 'HNS DANE Bootstrap Generator',
       standard: 'Authentification DNS des entités nommées',
       steps: {
         enter: 'Saisissez ici le nom, le serveur de noms, l’adresse IP du serveur et le certificat.',
@@ -409,7 +409,7 @@ export const localeText = {
     languageLabel: 'Sprache',
     hero: {
       eyebrow: 'Brauchen Sie HNS-, Registrar-, DNSSEC- und TLSA-Einträge?',
-      title: 'DANE-Record-Generator',
+      title: 'HNS DANE Bootstrap Generator',
       standard: 'DNS-basierte Authentifizierung benannter Entitäten',
       steps: {
         enter: 'Geben Sie hier Namen, Nameserver, Server-IP und Zertifikat ein.',
@@ -536,7 +536,7 @@ export const localeText = {
     languageLabel: 'Idioma',
     hero: {
       eyebrow: 'Precisa dos registros HNS, registrador, DNSSEC e TLSA?',
-      title: 'Gerador de Registros DANE',
+      title: 'HNS DANE Bootstrap Generator',
       standard: 'Autenticação baseada em DNS de entidades nomeadas',
       steps: {
         enter: 'Informe aqui o nome, o nameserver, o IP do servidor e o certificado.',
@@ -663,7 +663,7 @@ export const localeText = {
     languageLabel: '言語',
     hero: {
       eyebrow: 'HNS、レジストラ、DNSSEC、TLSA のレコードが必要ですか?',
-      title: 'DANE レコード生成ツール',
+      title: 'HNS DANE Bootstrap Generator',
       standard: 'DNS ベースの名前付きエンティティ認証',
       steps: {
         enter: 'ここに名前、ネームサーバー、サーバー IP、証明書を入力します。',
@@ -790,7 +790,7 @@ export const localeText = {
     languageLabel: 'اللغة',
     hero: {
       eyebrow: 'هل تحتاج إلى سجلات HNS والمحضر و DNSSEC و TLSA؟',
-      title: 'مولد سجلات DANE',
+      title: 'HNS DANE Bootstrap Generator',
       standard: 'المصادقة القائمة على DNS للكيانات المسماة',
       steps: {
         enter: 'أدخل الاسم، وخادم الأسماء، وعنوان IP للخادم، والشهادة هنا.',
@@ -1044,7 +1044,7 @@ export const localeText = {
     languageLabel: 'שפה',
     hero: {
       eyebrow: 'צריכים רשומות HNS, רשם, DNSSEC ו-TLSA?',
-      title: 'מחולל רשומות DANE',
+      title: 'HNS DANE Bootstrap Generator',
       standard: 'אימות ישויות שמיות מבוסס DNS',
       steps: {
         enter: 'הזינו כאן את השם, ה-nameserver, כתובת ה-IP של השרת והתעודה.',
