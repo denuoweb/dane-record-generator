@@ -23,7 +23,7 @@ HNS DANE appliance is installed for: ${label}/
 Open the public dashboard:
   ${dashboard}
 
-The dashboard shows the NS, GLUE, and DS records to paste into the HNS wallet.
+The dashboard shows the NS, GLUE, DS, and HNS Browser TXT records to paste into the HNS wallet.
 
 Root-only files:
   Wallet instructions: ${wallet_path}

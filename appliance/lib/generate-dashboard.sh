@@ -56,17 +56,23 @@ def local_status_cards():
         ("knotRunning", "Knot DNS running"),
         ("nginxRunning", "nginx running"),
         ("dnsPort53Listening", "DNS port 53 listening"),
-        ("httpPort80Listening", "HTTP port 80 listening"),
+        ("httpPort80Listening", "HTTP port 80 closed", False),
         ("httpsPort443Listening", "HTTPS port 443 listening"),
         ("zoneSigned", "Signed zone answers locally"),
         ("publicAuthoritativeReachable", "Public authoritative DNS answers"),
         ("tlsaMatchesHttpsKey", "HTTPS key matches TLSA"),
     ]
     cards = []
-    for key, label_text in labels:
+    for item in labels:
+        if len(item) == 2:
+            key, label_text = item
+            ready_when = True
+        else:
+            key, label_text, ready_when = item
         value = local.get(key)
-        klass = "ok" if value is True else "warn" if value is None else "bad"
-        text = "Ready" if value is True else "Pending" if value is None else "Needs attention"
+        ready = value is ready_when
+        klass = "ok" if ready else "warn" if value is None else "bad"
+        text = "Ready" if ready else "Pending" if value is None else "Needs attention"
         cards.append(f'<section class="card {klass}"><h3>{e(label_text)}</h3><p>{e(text)}</p></section>')
     return "\n".join(cards)
 
@@ -130,7 +136,7 @@ print(f"""<!doctype html>
 
   <section>
     <h2>Preflight</h2>
-    <p>Allow TCP 22, UDP 53, TCP 53, TCP 80, and TCP 443 in both UFW and any Linode Cloud Firewall.</p>
+    <p>Allow TCP 22, UDP 53, TCP 53, and TCP 443 in both UFW and any Linode Cloud Firewall. Do not expose TCP 80; the site is intended to load over HTTPS with DANE validation.</p>
     <p><a href="/preflight.html">Open the firewall checklist</a></p>
   </section>
 
@@ -203,8 +209,7 @@ ports = [
     ("TCP 22", "SSH access"),
     ("UDP 53", "authoritative DNS"),
     ("TCP 53", "DNS fallback and large DNSSEC answers"),
-    ("TCP 80", "HTTP dashboard"),
-    ("TCP 443", "HTTPS test site and DANE endpoint"),
+    ("TCP 443", "HTTPS dashboard and DANE endpoint"),
 ]
 rows = "\n".join(f"<tr><th>{html.escape(p)}</th><td>{html.escape(d)}</td></tr>" for p, d in ports)
 print(f"""<!doctype html>

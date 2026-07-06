@@ -16,7 +16,7 @@ make_test_env "$tmp"
   --hsd-account-name default \
   --enable-ipv6 no
 
-jq '.dnssec.ds = {keyTag: 12345, algorithm: 13, digestType: 2, digest: "ABCDEF"}' "$HNS_DANE_CONFIG" > "$tmp/config.json"
+jq '.dnssec.ds = {keyTag: 12345, algorithm: 13, digestType: 2, digest: "ABCDEF"} | .tls.spkiSha256 = "AABBCC"' "$HNS_DANE_CONFIG" > "$tmp/config.json"
 mv "$tmp/config.json" "$HNS_DANE_CONFIG"
 
 "$TEST_ROOT/lib/generate-hns-resource.sh"
@@ -26,7 +26,7 @@ mv "$tmp/config.json" "$HNS_DANE_CONFIG"
 assert_file_contains 'hsd-rpc getnameinfo denuoweb true' "$HNS_DANE_OUTPUT_DIR/wallet-hsd-cli.md" "node RPC name check"
 assert_file_contains 'hsw-cli --id primary account list' "$HNS_DANE_OUTPUT_DIR/wallet-hsd-cli.md" "wallet account list"
 assert_file_contains 'hsw-rpc selectwallet primary' "$HNS_DANE_OUTPUT_DIR/wallet-hsd-cli.md" "raw wallet RPC wallet selection"
-assert_file_contains "hsw-rpc sendupdate denuoweb '{\"records\":[{\"type\":\"NS\",\"ns\":\"ns1.denuoweb.\"},{\"type\":\"GLUE4\",\"ns\":\"ns1.denuoweb.\",\"address\":\"203.0.113.10\"},{\"type\":\"DS\",\"keyTag\":12345,\"algorithm\":13,\"digestType\":2,\"digest\":\"ABCDEF\"}]}' default" "$HNS_DANE_OUTPUT_DIR/wallet-hsd-cli.md" "account-aware hsw update"
+assert_file_contains "hsw-rpc sendupdate denuoweb '{\"records\":[{\"type\":\"NS\",\"ns\":\"ns1.denuoweb.\"},{\"type\":\"GLUE4\",\"ns\":\"ns1.denuoweb.\",\"address\":\"203.0.113.10\"},{\"type\":\"DS\",\"keyTag\":12345,\"algorithm\":13,\"digestType\":2,\"digest\":\"ABCDEF\"},{\"type\":\"TXT\",\"txt\":[\"hnsb=1;host=@;alpn=h2,h3;tlsa=3,1,1,aabbcc\"]}]}' default" "$HNS_DANE_OUTPUT_DIR/wallet-hsd-cli.md" "account-aware hsw update"
 assert_file_contains 'Wallet CLI Submit Commands' "$HNS_DANE_WEB/index.html" "dashboard shows wallet CLI section"
 assert_file_contains 'hsd-rpc getnameinfo denuoweb true' "$HNS_DANE_WEB/index.html" "dashboard shows chain check command"
 assert_file_contains 'hsw-cli --id primary account list' "$HNS_DANE_WEB/index.html" "dashboard shows account list command"

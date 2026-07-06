@@ -13,10 +13,9 @@ configure_firewall() {
   ufw allow OpenSSH
   ufw allow 53/tcp
   ufw allow 53/udp
-  ufw allow 80/tcp
   ufw allow 443/tcp
   ufw --force enable
-  log "Configured UFW for SSH, authoritative DNS, HTTP, and HTTPS."
+  log "Configured UFW for SSH, authoritative DNS, and HTTPS."
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then

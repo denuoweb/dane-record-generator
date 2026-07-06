@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Closed appliance HTTP serving on TCP 80 so the dashboard is exposed only through the HTTPS DANE endpoint.
+- Added the HNS Browser Capsule TXT record to appliance wallet resources and dashboard `sendupdate` commands.
 - Simplified Linode StackScript setup fields by removing site title and deployment mode, renaming the domain field, and defaulting hsd wallet routing to `primary` / `default`.
 - Added explicit `NS` records to appliance HNS resources so new wallet updates replace old delegated resources cleanly.
 - Corrected appliance wallet CLI commands to call `hsw-rpc selectwallet` before raw wallet RPC methods such as `sendupdate`.

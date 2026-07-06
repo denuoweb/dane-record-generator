@@ -14,7 +14,7 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 make_test_env "$tmp"
 seed_config
-jq '.dnssec.ds = {keyTag: 12345, algorithm: 13, digestType: 2, digest: "ABCDEF"} | .tlsa.associationData = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"' "$HNS_DANE_CONFIG" > "$tmp/config.json"
+jq '.dnssec.ds = {keyTag: 12345, algorithm: 13, digestType: 2, digest: "ABCDEF"} | .tls.spkiSha256 = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF" | .tlsa.associationData = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"' "$HNS_DANE_CONFIG" > "$tmp/config.json"
 mv "$tmp/config.json" "$HNS_DANE_CONFIG"
 "$TEST_ROOT/lib/generate-hns-resource.sh"
 "$TEST_ROOT/lib/render-wallet-instructions.sh"

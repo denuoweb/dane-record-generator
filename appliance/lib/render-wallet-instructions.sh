@@ -9,7 +9,7 @@ render_wallet_instructions() {
   config_required
   [[ -f "$HNS_DANE_OUTPUT_DIR/hns-resource.json" ]] || fail "Missing HNS resource JSON. Run generate-hns-resource.sh first."
 
-  local label ns ipv4 ipv6 key_tag algorithm digest_type digest resource_json hsd_wallet_id hsd_account_name account_arg
+  local label ns ipv4 ipv6 key_tag algorithm digest_type digest spki_sha256 capsule resource_json hsd_wallet_id hsd_account_name account_arg
   label="$(json_get '.hns.label')"
   ns="$(json_get '.nameservers[0].name')"
   ipv4="$(json_get '.network.publicIPv4')"
@@ -18,6 +18,8 @@ render_wallet_instructions() {
   algorithm="$(json_get '.dnssec.ds.algorithm')"
   digest_type="$(json_get '.dnssec.ds.digestType')"
   digest="$(json_get '.dnssec.ds.digest')"
+  spki_sha256="$(json_get '.tls.spkiSha256')"
+  capsule="hnsb=1;host=@;alpn=h2,h3;tlsa=3,1,1,$(printf '%s' "$spki_sha256" | tr '[:upper:]' '[:lower:]')"
   resource_json="$(jq -c . "$HNS_DANE_OUTPUT_DIR/hns-resource.json")"
   hsd_wallet_id="$(json_get '.hns.hsdWalletId')"
   hsd_wallet_id="${hsd_wallet_id:-primary}"
@@ -48,6 +50,8 @@ render_wallet_instructions() {
     printf '  Algorithm: %s\n' "$algorithm"
     printf '  Digest type: %s\n' "$digest_type"
     printf '  Digest: %s\n\n' "$digest"
+    printf 'TXT\n'
+    printf '  %s\n\n' "$capsule"
     printf 'Raw HNS resource JSON:\n\n```json\n%s\n```\n' "$(jq . "$HNS_DANE_OUTPUT_DIR/hns-resource.json")"
   } > "$HNS_DANE_OUTPUT_DIR/wallet-generic.md"
 
@@ -57,7 +61,7 @@ render_wallet_instructions() {
     printf '2. Open your name: %s/\n' "$label"
     printf '3. Open the DNS or resource records editor.\n'
     printf '4. Add the NS and GLUE records exactly as shown in wallet-generic.md.\n'
-    printf '5. Add the DS record exactly as shown in wallet-generic.md.\n'
+    printf '5. Add the DS and TXT records exactly as shown in wallet-generic.md.\n'
     printf '6. Remove any old records that are not in wallet-generic.md.\n'
     printf '7. Submit the update from your wallet.\n'
     printf '8. Return to the appliance dashboard after confirmation and refresh the verification section.\n\n'

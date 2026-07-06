@@ -8,7 +8,7 @@ source "$SCRIPT_DIR/common.sh"
 generate_hns_resource() {
   config_required
 
-  local ns ipv4 ipv6 key_tag algorithm digest_type digest
+  local ns ipv4 ipv6 key_tag algorithm digest_type digest spki_sha256 capsule
   ns="$(json_get '.nameservers[0].name')"
   ipv4="$(json_get '.network.publicIPv4')"
   ipv6="$(json_get '.network.publicIPv6')"
@@ -16,10 +16,15 @@ generate_hns_resource() {
   algorithm="$(json_get '.dnssec.ds.algorithm')"
   digest_type="$(json_get '.dnssec.ds.digestType')"
   digest="$(json_get '.dnssec.ds.digest')"
+  spki_sha256="$(json_get '.tls.spkiSha256')"
 
   [[ -n "$key_tag" && -n "$algorithm" && -n "$digest_type" && -n "$digest" ]] || {
     fail "DNSSEC DS is missing from config. Configure/sign Knot and rerun this script."
   }
+  [[ -n "$spki_sha256" ]] || {
+    fail "TLS SPKI SHA256 is missing from config. Run generate-tlsa.sh first."
+  }
+  capsule="hnsb=1;host=@;alpn=h2,h3;tlsa=3,1,1,$(printf '%s' "$spki_sha256" | tr '[:upper:]' '[:lower:]')"
 
   ensure_dir 0700 "$HNS_DANE_OUTPUT_DIR"
   ensure_dir 0755 "$HNS_DANE_FILES_DIR"
@@ -32,6 +37,7 @@ generate_hns_resource() {
     --arg algorithm "$algorithm" \
     --arg digestType "$digest_type" \
     --arg digest "$digest" \
+    --arg capsule "$capsule" \
     '{
       records: (
         [
@@ -46,6 +52,10 @@ generate_hns_resource() {
             algorithm: ($algorithm | tonumber),
             digestType: ($digestType | tonumber),
             digest: $digest
+          },
+          {
+            type: "TXT",
+            txt: [$capsule]
           }
         ]
       )

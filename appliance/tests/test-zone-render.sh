@@ -22,6 +22,6 @@ assert_file_contains '@ IN NS ns1.denuoweb.' "$zone_file" "NS record"
 assert_file_contains 'ns1 IN A 203.0.113.10' "$zone_file" "GLUE target A"
 assert_file_contains 'ns1 IN AAAA 2001:db8::10' "$zone_file" "GLUE target AAAA"
 assert_file_contains "_443._tcp IN TLSA 3 1 1 $digest" "$zone_file" "TLSA record"
-assert_file_contains '@ IN TXT "hns-dane-appliance=v0.1.6"' "$zone_file" "marker TXT"
+assert_file_contains '@ IN TXT "hns-dane-appliance=v0.1.7"' "$zone_file" "marker TXT"
 
 printf 'ok - zone-render\n'

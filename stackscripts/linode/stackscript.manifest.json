@@ -3,5 +3,5 @@
   "description": "Beginner HNS DANE appliance for one Handshake domain. Installs Knot DNS authoritative DNSSEC, TLSA, nginx dashboard, wallet record exports, and local verification. Does not request wallet seeds, Linode API tokens, registrar credentials, or payment data.",
   "images": ["linode/debian13", "linode/debian12"],
   "is_public": false,
-  "rev_note": "v0.1.6"
+  "rev_note": "v0.1.7"
 }

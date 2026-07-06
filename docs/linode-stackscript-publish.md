@@ -9,14 +9,14 @@ This is a maintainer/release step, not something beginners should do.
 Create the git tag that matches `appliance/VERSION`, then push it.
 
 ```bash
-git tag v0.1.6
-git push origin v0.1.6
+git tag v0.1.7
+git push origin v0.1.7
 ```
 
 ## 2. Compute the GitHub release archive hash
 
 ```bash
-scripts/sha256-release.sh https://github.com/denuoweb/dane-record-generator/archive/refs/tags/v0.1.6.tar.gz
+scripts/sha256-release.sh https://github.com/denuoweb/dane-record-generator/archive/refs/tags/v0.1.7.tar.gz
 ```
 
 The StackScript must be pinned to this hash before publication.
@@ -50,7 +50,7 @@ Optional additional target:
 Debian 12
 
 Revision Note:
-v0.1.6
+v0.1.7
 ```
 
 Do not use the Handshake domain, such as `denuoweb/`, as the StackScript label. The domain is entered later when creating a Linode from the StackScript, in the generated `hns_name` UDF field.

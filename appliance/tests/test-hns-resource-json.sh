@@ -10,7 +10,7 @@ trap 'rm -rf "$tmp"' EXIT
 make_test_env "$tmp"
 seed_config
 
-jq '.network.publicIPv6 = "2001:db8::10" | .nameservers[0].ipv6 = "2001:db8::10" | .dnssec.ds = {keyTag: 12345, algorithm: 13, digestType: 2, digest: "ABCDEF012345"}' "$HNS_DANE_CONFIG" > "$tmp/config.json"
+jq '.network.publicIPv6 = "2001:db8::10" | .nameservers[0].ipv6 = "2001:db8::10" | .dnssec.ds = {keyTag: 12345, algorithm: 13, digestType: 2, digest: "ABCDEF012345"} | .tls.spkiSha256 = "AABBCC"' "$HNS_DANE_CONFIG" > "$tmp/config.json"
 mv "$tmp/config.json" "$HNS_DANE_CONFIG"
 
 "$TEST_ROOT/lib/generate-hns-resource.sh"
@@ -22,5 +22,7 @@ assert_eq "ns1.denuoweb." "$(jq -r '.records[1].ns' "$HNS_DANE_OUTPUT_DIR/hns-re
 assert_eq "GLUE6" "$(jq -r '.records[2].type' "$HNS_DANE_OUTPUT_DIR/hns-resource.json")" "IPv6 record type"
 assert_eq "DS" "$(jq -r '.records[3].type' "$HNS_DANE_OUTPUT_DIR/hns-resource.json")" "DS record type"
 assert_eq "12345" "$(jq -r '.records[3].keyTag' "$HNS_DANE_OUTPUT_DIR/hns-resource.json")" "DS key tag"
+assert_eq "TXT" "$(jq -r '.records[4].type' "$HNS_DANE_OUTPUT_DIR/hns-resource.json")" "TXT record type"
+assert_eq "hnsb=1;host=@;alpn=h2,h3;tlsa=3,1,1,aabbcc" "$(jq -r '.records[4].txt[0]' "$HNS_DANE_OUTPUT_DIR/hns-resource.json")" "browser capsule"
 
 printf 'ok - hns-resource-json\n'

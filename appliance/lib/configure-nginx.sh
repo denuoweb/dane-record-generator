@@ -9,32 +9,25 @@ configure_nginx() {
   require_root
   config_required
 
-  local cert key
+  local cert key label
   cert="$(json_get '.tls.certificatePath')"
   key="$(json_get '.tls.privateKeyPath')"
+  label="$(json_get '.hns.label')"
   [[ -f "$cert" && -f "$key" ]] || fail "TLS material is missing. Run generate-tlsa.sh first."
 
   ensure_dir 0755 "$(dirname "$HNS_DANE_NGINX_AVAILABLE")"
   cat > "$HNS_DANE_NGINX_AVAILABLE" <<EOF
 server {
-  listen 80 default_server;
-  listen [::]:80 default_server;
+  listen 443 ssl default_server;
+  listen [::]:443 ssl default_server;
   server_name _;
-  root $HNS_DANE_WEB;
-  index index.html;
-
-  add_header X-Content-Type-Options "nosniff" always;
-  add_header Referrer-Policy "no-referrer" always;
-
-  location / {
-    try_files \$uri \$uri/ =404;
-  }
+  ssl_reject_handshake on;
 }
 
 server {
   listen 443 ssl;
   listen [::]:443 ssl;
-  server_name _;
+  server_name $label www.$label;
   root $HNS_DANE_WEB;
   index index.html;
 
@@ -56,7 +49,7 @@ EOF
   nginx -t
   safe_systemctl enable nginx >/dev/null 2>&1 || true
   safe_systemctl restart nginx >/dev/null 2>&1 || true
-  log "Configured nginx dashboard and HTTPS endpoint."
+  log "Configured nginx HTTPS endpoint for $label/."
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then

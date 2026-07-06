@@ -117,7 +117,7 @@ generate_config() {
     --arg publicIPv4 "$public_ipv4" \
     --arg siteTitle "$site_title" \
     --arg adminTokenFile "$admin_token_file" \
-    --arg publicUrl "http://${public_ipv4}/" \
+    --arg publicUrl "https://${label}/" \
     --arg tlsKeyPath "$HNS_DANE_TLS_DIR/${label}.key" \
     --arg tlsCertPath "$HNS_DANE_TLS_DIR/${label}.crt" \
     --arg etcPath "$HNS_DANE_ETC" \
